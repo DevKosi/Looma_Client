@@ -177,21 +177,18 @@ export default function Login() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-gradient-to-br from-primary-50 via-accent1-50 to-accent2-50 flex items-center justify-center p-4"
+      className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4"
     >
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className="card w-full max-w-md mx-auto shadow-2xl"
+        transition={{ delay: 0.2 }}
+        className="bg-white rounded-xl shadow-lg overflow-hidden w-full max-w-md"
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary-500 via-accent1-500 to-accent2-500 p-8 text-center rounded-t-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 to-accent1-600/20"></div>
-          <div className="relative z-10">
-            <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
-            <p className="text-white/90 text-lg">Sign in to your account</p>
-          </div>
+        <div className="bg-[#6366F1] p-6 text-center">
+          <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
+          <p className="text-[#E2E8F0] mt-1">Sign in to your account</p>
         </div>
 
         {/* Messages */}
@@ -200,20 +197,18 @@ export default function Login() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="status-error p-3 rounded-lg mb-4 text-sm flex items-start"
+              className="bg-[#F43F5E]/10 text-[#F43F5E] p-3 rounded-lg mb-4 text-sm flex items-center"
             >
-              <FiAlertCircle className="mr-2 mt-0.5 flex-shrink-0" />
-              <span>{errorMsg}</span>
+              <span className="mr-2">⚠️</span> {errorMsg}
             </motion.div>
           )}
           {isResetSent && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="status-success p-3 rounded-lg mb-4 text-sm flex items-start"
+              className="bg-[#10B981]/10 text-[#10B981] p-3 rounded-lg mb-4 text-sm flex items-center"
             >
-              <FiCheckCircle className="mr-2 mt-0.5 flex-shrink-0" />
-              <span>Password reset link sent to your email. Please check your inbox and spam folder.</span>
+              <span className="mr-2">✓</span> Password reset link sent to your email. Please check your inbox and spam folder.
             </motion.div>
           )}
         </div>
@@ -221,9 +216,9 @@ export default function Login() {
         {/* Form */}
         <form onSubmit={handleLogin} className="p-6 space-y-4">
           {/* Email */}
-          <div className="space-y-2">
-            <label className="text-gray-700 text-sm font-semibold flex items-center">
-              <FiMail className="mr-2 text-primary-500" /> Email Address
+          <div className="space-y-1">
+            <label className="text-[#1E293B] text-sm font-medium flex items-center">
+              <FiMail className="mr-2" /> Email Address
             </label>
             <input
               type="email"
@@ -231,21 +226,15 @@ export default function Login() {
               value={formData.email}
               onChange={handleChange}
               required
-              className={`input-field border-2 ${validationErrors.email ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20' : 'border-gray-200 focus:border-primary-500 focus:ring-primary-500/20'}`}
+              className="w-full p-3 border border-[#E2E8F0] rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
               placeholder="your@email.com"
-              aria-describedby={validationErrors.email ? "email-error" : undefined}
             />
-            {validationErrors.email && (
-              <p id="email-error" className="text-error-600 text-xs mt-1 font-medium">
-                {validationErrors.email}
-              </p>
-            )}
           </div>
 
           {/* Password */}
-          <div className="space-y-2">
-            <label className="text-gray-700 text-sm font-semibold flex items-center">
-              <FiLock className="mr-2 text-primary-500" /> Password
+          <div className="space-y-1">
+            <label className="text-[#1E293B] text-sm font-medium flex items-center">
+              <FiLock className="mr-2" /> Password
             </label>
             <div className="relative">
               <input
@@ -254,24 +243,18 @@ export default function Login() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className={`input-field border-2 pr-10 ${validationErrors.password ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20' : 'border-gray-200 focus:border-primary-500 focus:ring-primary-500/20'}`}
+                className="w-full p-3 border border-[#E2E8F0] rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent pr-10"
                 placeholder="Enter your password"
-                aria-describedby={validationErrors.password ? "password-error" : undefined}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary-600 transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#6366F1]"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
               </button>
             </div>
-            {validationErrors.password && (
-              <p id="password-error" className="text-error-600 text-xs mt-1 font-medium">
-                {validationErrors.password}
-              </p>
-            )}
           </div>
 
           {/* Submit Button */}
@@ -280,10 +263,10 @@ export default function Login() {
             disabled={loading}
             whileHover={{ scale: loading ? 1 : 1.02 }}
             whileTap={{ scale: loading ? 1 : 0.98 }}
-            className={`w-full py-4 px-6 rounded-xl font-bold text-white transition-all duration-200 shadow-lg ${
+            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${
               loading 
-                ? 'bg-primary-400 cursor-not-allowed shadow-md' 
-                : 'bg-gradient-to-r from-primary-500 to-accent1-500 hover:from-primary-600 hover:to-accent1-600 hover:shadow-xl focus:ring-2 focus:ring-primary-500 focus:ring-offset-2'
+                ? 'bg-[#6366F1]/70 cursor-not-allowed' 
+                : 'bg-[#6366F1] hover:bg-[#4F46E5] focus:ring-2 focus:ring-[#6366F1] focus:ring-offset-2'
             } flex items-center justify-center`}
           >
             {loading ? (
@@ -307,16 +290,16 @@ export default function Login() {
           <button
             onClick={handleForgotPassword}
             disabled={loading}
-            className="text-primary-600 hover:text-primary-700 text-sm font-semibold transition-colors disabled:opacity-50 hover:underline"
+            className="text-[#6366F1] hover:text-[#4F46E5] text-sm font-medium transition-colors disabled:opacity-50"
           >
             Forgot password?
           </button>
 
-          <div className="text-gray-600 text-sm">
+          <div className="text-[#64748B] text-sm">
             Don't have an account?{" "}
             <Link
               to="/register"
-              className="text-primary-600 hover:text-primary-700 font-semibold hover:underline transition-colors"
+              className="text-[#6366F1] hover:text-[#4F46E5] font-medium"
             >
               Sign up
             </Link>

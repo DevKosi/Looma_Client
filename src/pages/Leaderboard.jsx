@@ -170,15 +170,15 @@ export default function Leaderboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-[#6366F1] shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <FiAward className="text-yellow-500" />
+              <h1 className="text-2xl lg:text-3xl font-bold text-white flex items-center gap-3">
+                <FiAward className="text-yellow-400" />
                 Leaderboards
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-[#E2E8F0] mt-1">
                 Compete with your peers and track your progress
               </p>
             </div>
@@ -188,21 +188,21 @@ export default function Leaderboard() {
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg p-4 min-w-64"
+                className="bg-white bg-opacity-20 backdrop-blur-sm text-white rounded-lg p-4 w-full lg:min-w-64"
               >
                 <h3 className="font-semibold text-sm opacity-90">Your Position</h3>
                 <div className="flex justify-between items-center mt-2">
                   <div>
                     <div className="text-2xl font-bold">
-                      #{activeScope === 'department' ? userPosition.department.rank : userPosition.global.rank}
+                      #{activeScope === 'department' ? userPosition.department?.rank : userPosition.global?.rank}
                     </div>
                     <div className="text-xs opacity-75">
-                      out of {activeScope === 'department' ? userPosition.department.totalParticipants : userPosition.global.totalParticipants}
+                      out of {activeScope === 'department' ? userPosition.department?.totalParticipants : userPosition.global?.totalParticipants}
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-semibold">
-                      {activeScope === 'department' ? userPosition.department.stats?.averagePercentage : userPosition.global.stats?.averagePercentage}%
+                      {activeScope === 'department' ? userPosition.department?.stats?.averagePercentage : userPosition.global?.stats?.averagePercentage}%
                     </div>
                     <div className="text-xs opacity-75">avg score</div>
                   </div>
@@ -215,77 +215,81 @@ export default function Leaderboard() {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Controls */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex flex-wrap gap-4 items-center justify-between">
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             {/* Scope Toggle */}
-            <div className="flex bg-gray-100 rounded-lg p-1">
+            <div className="flex bg-gray-100 rounded-lg p-1 w-full sm:w-auto">
               <button
                 onClick={() => setActiveScope('department')}
-                className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+                className={`px-3 sm:px-4 py-2 rounded-md font-medium text-sm transition-colors flex-1 sm:flex-none ${
                   activeScope === 'department' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
+                    ? 'bg-white text-[#6366F1] shadow-sm' 
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
                 <FiUsers className="inline mr-2" />
-                {userDepartment} Department
+                <span className="hidden sm:inline">{userDepartment} Department</span>
+                <span className="sm:hidden">Dept</span>
               </button>
               <button
                 onClick={() => setActiveScope('global')}
-                className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+                className={`px-3 sm:px-4 py-2 rounded-md font-medium text-sm transition-colors flex-1 sm:flex-none ${
                   activeScope === 'global' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
+                    ? 'bg-white text-[#6366F1] shadow-sm' 
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
-                🌍 Global
+                🌍 <span className="hidden sm:inline">Global</span>
               </button>
             </div>
 
-            {/* Ranking Type Selector */}
-            <div className="flex items-center gap-2">
-              <FiFilter className="text-gray-400" />
-              <select
-                value={activeRankingType}
-                onChange={(e) => setActiveRankingType(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value={RANKING_TYPES.AVERAGE_SCORE}>Average Score</option>
-                <option value={RANKING_TYPES.TOTAL_SCORE}>Total Score</option>
-                <option value={RANKING_TYPES.QUIZ_COUNT}>Quiz Count</option>
-                <option value={RANKING_TYPES.STREAK}>Current Streak</option>
-                <option value={RANKING_TYPES.RECENT_PERFORMANCE}>Recent Performance</option>
-              </select>
-            </div>
+            {/* Filters Row */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              {/* Ranking Type Selector */}
+              <div className="flex items-center gap-2">
+                <FiFilter className="text-gray-400" />
+                <select
+                  value={activeRankingType}
+                  onChange={(e) => setActiveRankingType(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] flex-1 sm:flex-none"
+                >
+                  <option value={RANKING_TYPES.AVERAGE_SCORE}>Average Score</option>
+                  <option value={RANKING_TYPES.TOTAL_SCORE}>Total Score</option>
+                  <option value={RANKING_TYPES.QUIZ_COUNT}>Quiz Count</option>
+                  <option value={RANKING_TYPES.STREAK}>Current Streak</option>
+                  <option value={RANKING_TYPES.RECENT_PERFORMANCE}>Recent Performance</option>
+                </select>
+              </div>
 
-            {/* Time Period Selector */}
-            <div className="flex items-center gap-2">
-              <FiCalendar className="text-gray-400" />
-              <select
-                value={activeTimePeriod}
-                onChange={(e) => setActiveTimePeriod(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value={TIME_PERIODS.ALL_TIME}>All Time</option>
-                <option value={TIME_PERIODS.THIS_MONTH}>This Month</option>
-                <option value={TIME_PERIODS.THIS_WEEK}>This Week</option>
-                <option value={TIME_PERIODS.TODAY}>Today</option>
-              </select>
-            </div>
+              {/* Time Period Selector */}
+              <div className="flex items-center gap-2">
+                <FiCalendar className="text-gray-400" />
+                <select
+                  value={activeTimePeriod}
+                  onChange={(e) => setActiveTimePeriod(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] flex-1 sm:flex-none"
+                >
+                  <option value={TIME_PERIODS.ALL_TIME}>All Time</option>
+                  <option value={TIME_PERIODS.THIS_MONTH}>This Month</option>
+                  <option value={TIME_PERIODS.THIS_WEEK}>This Week</option>
+                  <option value={TIME_PERIODS.TODAY}>Today</option>
+                </select>
+              </div>
 
-            {/* Refresh Button */}
-            <button
-              onClick={loadLeaderboards}
-              disabled={refreshing}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm"
-            >
-              <FiRefreshCw className={refreshing ? 'animate-spin' : ''} />
-              Refresh
-            </button>
+              {/* Refresh Button */}
+              <button
+                onClick={loadLeaderboards}
+                disabled={refreshing}
+                className="flex items-center gap-2 px-4 py-2 bg-[#6366F1] text-white rounded-md hover:bg-[#4F46E5] disabled:opacity-50 text-sm w-full sm:w-auto justify-center"
+              >
+                <FiRefreshCw className={refreshing ? 'animate-spin' : ''} />
+                Refresh
+              </button>
+            </div>
           </div>
 
           {/* Current Selection Info */}
-          <div className="mt-4 flex items-center gap-4 text-sm text-gray-600">
+          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
             <div className="flex items-center gap-2">
               <span className={rankingInfo.color}>{rankingInfo.icon}</span>
               <span>Ranking by: <strong>{rankingInfo.label}</strong></span>
@@ -305,19 +309,24 @@ export default function Leaderboard() {
         {/* Leaderboard Display */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
                   {rankingInfo.icon}
-                  {activeScope === 'department' ? `${userDepartment} Department` : 'Global'} Leaderboard
+                  <span className="hidden sm:inline">
+                    {activeScope === 'department' ? `${userDepartment} Department` : 'Global'} Leaderboard
+                  </span>
+                  <span className="sm:hidden">
+                    {activeScope === 'department' ? 'Dept' : 'Global'} Leaderboard
+                  </span>
                 </h2>
                 <p className="opacity-90 text-sm mt-1">
                   {activeLeaderboard?.users?.length || 0} participants • {rankingInfo.label} • {timePeriodInfo.label}
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold">{activeLeaderboard?.totalParticipants || 0}</div>
+                <div className="text-xl sm:text-2xl font-bold">{activeLeaderboard?.totalParticipants || 0}</div>
                 <div className="text-sm opacity-75">Total Players</div>
               </div>
             </div>
@@ -341,25 +350,25 @@ export default function Leaderboard() {
                         isCurrentUser ? 'bg-blue-50 border-l-4 border-blue-500' : ''
                       }`}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         {/* Rank and User Info */}
-                        <div className="flex items-center gap-4">
-                          <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 ${rankDisplay.color}`}>
-                            <span className="font-bold text-lg">#{user.rank}</span>
+                        <div className="flex items-center gap-3 sm:gap-4">
+                          <div className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 ${rankDisplay.color}`}>
+                            <span className="font-bold text-base sm:text-lg">#{user.rank}</span>
                           </div>
                           
-                          <div className="flex items-center gap-3">
-                            {rankDisplay.icon}
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <span className="hidden sm:inline">{rankDisplay.icon}</span>
                             <div>
                               <div className="font-semibold text-gray-900 flex items-center gap-2">
-                                {user.fullName}
+                                <span className="text-sm sm:text-base">{user.fullName}</span>
                                 {isCurrentUser && (
                                   <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                                     You
                                   </span>
                                 )}
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-xs sm:text-sm text-gray-500">
                                 {user.regNumber} • {activeScope === 'global' ? user.department : ''}
                               </div>
                             </div>
@@ -367,35 +376,35 @@ export default function Leaderboard() {
                         </div>
 
                         {/* Stats */}
-                        <div className="flex items-center gap-6 text-sm">
+                        <div className="flex items-center gap-3 sm:gap-6 text-sm w-full sm:w-auto justify-between sm:justify-end">
                           <div className="text-center">
-                            <div className="font-bold text-lg text-gray-900">
+                            <div className="font-bold text-base sm:text-lg text-gray-900">
                               {Math.round(user.averagePercentage)}%
                             </div>
-                            <div className="text-gray-500">Avg Score</div>
+                            <div className="text-gray-500 text-xs sm:text-sm">Avg</div>
                           </div>
                           
                           <div className="text-center">
-                            <div className="font-bold text-lg text-gray-900">
+                            <div className="font-bold text-base sm:text-lg text-gray-900">
                               {user.totalQuizzes}
                             </div>
-                            <div className="text-gray-500">Quizzes</div>
+                            <div className="text-gray-500 text-xs sm:text-sm">Quizzes</div>
                           </div>
                           
                           {user.recentStreak > 0 && (
                             <div className="text-center">
-                              <div className="font-bold text-lg text-orange-600">
+                              <div className="font-bold text-base sm:text-lg text-orange-600">
                                 {user.recentStreak}
                               </div>
-                              <div className="text-gray-500">Streak</div>
+                              <div className="text-gray-500 text-xs sm:text-sm">Streak</div>
                             </div>
                           )}
 
                           <div className="text-center">
-                            <div className="font-bold text-lg text-purple-600">
+                            <div className="font-bold text-base sm:text-lg text-purple-600">
                               {user.totalPoints}
                             </div>
-                            <div className="text-gray-500">Points</div>
+                            <div className="text-gray-500 text-xs sm:text-sm">Points</div>
                           </div>
                         </div>
                       </div>

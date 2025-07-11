@@ -5,9 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { runTransaction, serverTimestamp } from 'firebase/firestore';
 import { getUserPosition, calculateUserStats } from '../utils/leaderboardService';
+import DashboardHeader from '../components/DashboardHeader';
 
 import { 
-  FiLogOut, FiBook, FiAward, FiUser, 
+  FiBook, FiAward, FiUser, 
   FiSearch, FiCheckCircle, FiBarChart2, 
   FiLock, FiX, FiChevronDown, FiClock,
   FiCheck, FiTrendingUp
@@ -248,30 +249,12 @@ const verifyAccessCode = async () => {
       return (
       <div className="min-h-screen bg-gray-50 relative">
       {/* Header */}
-      <header className="bg-white shadow-soft sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-2 bg-blue-100 rounded-full">
-              <FiBook className="text-blue-600" size={20} />
-            </div>
-            <div>
-              <h1 className="font-bold text-gray-800">Student Dashboard</h1>
-              <p className="text-sm text-gray-600">
-                {user?.department} • {user?.regNumber}
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium px-3 py-2 rounded-md hover:bg-red-50 transition-colors"
-            >
-              <FiLogOut /> Sign Out
-            </button>
-          </div>
-        </div>
-      </header>
+      <DashboardHeader 
+        user={user}
+        onLogout={handleLogout}
+        title="Student Dashboard"
+        subtitle={`${user?.department} • ${user?.regNumber}`}
+      />
 
       {/* Navigation */}
       <nav className="bg-white shadow-soft">
@@ -620,7 +603,7 @@ const verifyAccessCode = async () => {
               </div>
               <button
                 onClick={() => navigate('/leaderboard')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-[#6366F1] hover:bg-[#4F46E5] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 View Full Leaderboard
               </button>
@@ -644,12 +627,12 @@ const verifyAccessCode = async () => {
                 <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
                   <h4 className="font-semibold text-gray-800 mb-2">Department Ranking</h4>
                   <p className="text-2xl font-bold text-yellow-600">
-                    #{userPosition.department.rank || 'Unranked'} of {userPosition.department.totalParticipants || 0}
+                    #{userPosition.department?.rank || 'Unranked'} of {userPosition.department?.totalParticipants || 0}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {userPosition.department.rank ? 'Your current position' : 'Take quizzes to get ranked'}
+                    {userPosition.department?.rank ? 'Your current position' : 'Take quizzes to get ranked'}
                   </p>
-                  {userPosition.department.stats && (
+                  {userPosition.department?.stats && (
                     <div className="mt-2 text-xs text-gray-500">
                       Avg: {userPosition.department.stats.averagePercentage}% • 
                       Quizzes: {userPosition.department.stats.totalQuizzes}
@@ -659,12 +642,12 @@ const verifyAccessCode = async () => {
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
                   <h4 className="font-semibold text-gray-800 mb-2">Global Ranking</h4>
                   <p className="text-2xl font-bold text-blue-600">
-                    #{userPosition.global.rank || 'Unranked'} of {userPosition.global.totalParticipants || 0}
+                    #{userPosition.global?.rank || 'Unranked'} of {userPosition.global?.totalParticipants || 0}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {userPosition.global.rank ? 'Compete with all students' : 'Take quizzes to get ranked'}
+                    {userPosition.global?.rank ? 'Compete with all students' : 'Take quizzes to get ranked'}
                   </p>
-                  {userPosition.global.stats && (
+                  {userPosition.global?.stats && (
                     <div className="mt-2 text-xs text-gray-500">
                       Avg: {userPosition.global.stats.averagePercentage}% • 
                       Points: {userPosition.global.stats.totalPoints}
@@ -674,22 +657,22 @@ const verifyAccessCode = async () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
-                  <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Department Ranking</h4>
-                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                    {userPosition?.department?.hasData ? 'Loading...' : 'No Data'}
+                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                  <h4 className="font-semibold text-gray-800 mb-2">Department Ranking</h4>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    No Data
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {userPosition?.department?.hasData ? 'Calculating your position...' : 'Take quizzes to see your position'}
+                  <p className="text-sm text-gray-600">
+                    Take quizzes to see your position
                   </p>
                 </div>
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-                  <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Global Ranking</h4>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {userPosition?.global?.hasData ? 'Loading...' : 'No Data'}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                  <h4 className="font-semibold text-gray-800 mb-2">Global Ranking</h4>
+                  <p className="text-2xl font-bold text-blue-600">
+                    No Data
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {userPosition?.global?.hasData ? 'Calculating your position...' : 'Take quizzes to see your position'}
+                  <p className="text-sm text-gray-600">
+                    Take quizzes to see your position
                   </p>
                 </div>
               </div>
