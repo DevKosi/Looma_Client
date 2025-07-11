@@ -39,6 +39,9 @@ All notable changes to the Looma Quiz Platform will be documented in this file.
 - Resolved navigation issues in quiz interface
 - Fixed CSV export functionality in admin dashboard
 - Corrected user role detection during authentication
+- **🔍 DEBUGGING**: Enhanced logging for percentage calculation, email field handling, and time tracking
+- **🔍 DEBUGGING**: Added comprehensive data validation and error handling for quiz submissions
+- **🔍 DEBUGGING**: Improved timestamp conversion and data mapping in admin results display
 
 ---
 

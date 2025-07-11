@@ -139,13 +139,27 @@ const AdminDashboard = () => {
     try {
       const submissionsRef = collection(db, 'quizzes', quizId, 'submissions');
       const snapshot = await getDocs(submissionsRef);
-      const resultsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().submittedAt?.toDate().toLocaleString()
-      }));
+      const resultsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('Raw submission data:', data);
+        
+        return {
+          id: doc.id,
+          ...data,
+          timestamp: data.submittedAt?.toDate ? data.submittedAt.toDate().toLocaleString() : 'Unknown',
+          percentage: data.percentage || 0,
+          timeSpent: data.timeSpent || 0,
+          email: data.email || 'No email',
+          regNumber: data.regNumber || 'Anonymous',
+          fullName: data.fullName || 'Unknown',
+          department: data.department || 'Unknown'
+        };
+      });
+      
+      console.log('Processed results data:', resultsData);
       setResults(resultsData);
     } catch (error) {
+      console.error('Error fetching results:', error);
       showNotification('Failed to fetch results', 'error');
     } finally {
       setLoading(prev => ({ ...prev, results: false }));

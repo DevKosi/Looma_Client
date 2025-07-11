@@ -131,6 +131,12 @@ export default function QuizPage() {
 
       // Fetch user data from Firestore to get registration number
       console.log('Fetching user data for:', currentUser.uid);
+      console.log('Current user auth data:', {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName
+      });
+      
       const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
       
       if (!userDoc.exists()) {
@@ -138,31 +144,38 @@ export default function QuizPage() {
       }
 
       const userData = userDoc.data();
-      console.log('User data retrieved:', userData);
+      console.log('User data retrieved from Firestore:', userData);
 
-      if (!userData.regNumber) {
+      if (!userData || !userData.regNumber) {
         throw new Error('Registration number not found in profile. Please update your profile.');
       }
 
+      // Calculate percentage and time spent
+      const totalQuestions = quiz.questions.length;
+      const percentage = totalQuestions > 0 ? Math.round((correct / totalQuestions) * 100) : 0;
+      const timeSpentInSeconds = Math.max(0, (quiz.timeLimit * 60) - (timeLeft || 0));
+      
       const submissionData = {
         userId: currentUser.uid,
         regNumber: userData.regNumber,
         fullName: userData.fullName || 'Unknown',
         department: userData.department || 'Unknown',
-        email: userData.email || currentUser.email,
+        email: userData.email || currentUser.email || 'No email provided',
         score: correct,
-        total: quiz.questions.length,
-        percentage: Math.round((correct / quiz.questions.length) * 100),
+        total: totalQuestions,
+        percentage: percentage,
         accessCode: accessCode || 'direct',
         submittedAt: serverTimestamp(),
         answers,
         quizTitle: quiz.title,
-        timeSpent: (quiz.timeLimit * 60) - timeLeft,
+        timeSpent: timeSpentInSeconds,
       };
 
       console.log('Submitting data:', submissionData);
-      await addDoc(collection(db, 'quizzes', id, 'submissions'), submissionData);
-      console.log('Submission successful');
+      console.log('Calculated values - Score:', correct, 'Total:', totalQuestions, 'Percentage:', percentage, 'Time Spent:', timeSpentInSeconds);
+      
+      const docRef = await addDoc(collection(db, 'quizzes', id, 'submissions'), submissionData);
+      console.log('Submission successful with ID:', docRef.id);
       
     } catch (err) {
       console.error('Submission error:', err);
