@@ -116,9 +116,9 @@ const AdminDashboard = () => {
       // Calculate total participants (simplified example)
       let participants = 0;
       for (const quizDoc of snapshot.docs) {
-        const resultsRef = collection(db, 'quizzes', quizDoc.id, 'results');
-        const resultsSnap = await getDocs(resultsRef);
-        participants += resultsSnap.size;
+        const submissionsRef = collection(db, 'quizzes', quizDoc.id, 'submissions');
+        const submissionsSnap = await getDocs(submissionsRef);
+        participants += submissionsSnap.size;
       }
 
       setStats({
@@ -136,12 +136,12 @@ const AdminDashboard = () => {
   const fetchResults = useCallback(async (quizId) => {
     setLoading(prev => ({ ...prev, results: true }));
     try {
-      const resultsRef = collection(db, 'quizzes', quizId, 'results');
-      const snapshot = await getDocs(resultsRef);
+      const submissionsRef = collection(db, 'quizzes', quizId, 'submissions');
+      const snapshot = await getDocs(submissionsRef);
       const resultsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        timestamp: doc.data().timestamp?.toDate().toLocaleString()
+        timestamp: doc.data().submittedAt?.toDate().toLocaleString()
       }));
       setResults(resultsData);
     } catch (error) {
@@ -281,10 +281,10 @@ const AdminDashboard = () => {
           transaction.delete(doc.ref);
         });
 
-        // Delete all results for this quiz
-        const resultsQuery = query(collection(db, 'quizzes', quizId, 'results'));
-        const resultsSnapshot = await getDocs(resultsQuery);
-        resultsSnapshot.forEach(doc => {
+        // Delete all submissions for this quiz
+        const submissionsQuery = query(collection(db, 'quizzes', quizId, 'submissions'));
+        const submissionsSnapshot = await getDocs(submissionsQuery);
+        submissionsSnapshot.forEach(doc => {
           transaction.delete(doc.ref);
         });
       });
@@ -337,8 +337,8 @@ const AdminDashboard = () => {
     setLoading(prev => ({ ...prev, action: true }));
     try {
       const batch = writeBatch(db);
-      const resultsRef = collection(db, 'quizzes', quizId, 'results');
-      const snapshot = await getDocs(resultsRef);
+      const submissionsRef = collection(db, 'quizzes', quizId, 'submissions');
+      const snapshot = await getDocs(submissionsRef);
       
       snapshot.forEach(doc => {
         batch.delete(doc.ref);

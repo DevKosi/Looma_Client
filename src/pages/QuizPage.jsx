@@ -93,9 +93,15 @@ export default function QuizPage() {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
 
+      // Fetch user data from Firestore to get registration number
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      const userData = userDoc.data();
+
       await addDoc(collection(db, 'quizzes', id, 'submissions'), {
         userId: currentUser.uid,
-        regNumber: currentUser.displayName || 'Anonymous',
+        regNumber: userData?.regNumber || 'Anonymous',
+        fullName: userData?.fullName || 'Unknown',
+        department: userData?.department || 'Unknown',
         score: correct,
         total: quiz.questions.length,
         accessCode,
