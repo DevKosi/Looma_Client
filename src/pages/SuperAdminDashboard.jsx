@@ -45,6 +45,9 @@ import {
   TIME_FRAMES,
   HEALTH_METRICS
 } from '../utils/superAdminService';
+import { generateGlobalLeaderboard, generateDepartmentLeaderboard } from '../utils/leaderboardService';
+import { useTheme } from '../contexts/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function SuperAdminDashboard() {
   const [superAdmin, setSuperAdmin] = useState(null);
@@ -73,8 +76,15 @@ export default function SuperAdminDashboard() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
+  
+  // Leaderboard states
+  const [globalLeaderboard, setGlobalLeaderboard] = useState(null);
+  const [deptLeaderboards, setDeptLeaderboards] = useState({});
+  const [departments, setDepartments] = useState([]);
+  const [loadingLeaderboards, setLoadingLeaderboards] = useState(false);
 
   const navigate = useNavigate();
+  const { isDark } = useTheme();
 
   // Verify super admin access
   useEffect(() => {
@@ -177,10 +187,40 @@ export default function SuperAdminDashboard() {
 
       setAllUsers(users);
       setAllQuizzes(quizzes);
+      
+      // Extract unique departments
+      const uniqueDepartments = [...new Set(quizzes.map(q => q.department).filter(Boolean))];
+      setDepartments(uniqueDepartments);
     } catch (error) {
       showNotification('Failed to load users and quizzes', 'error');
     }
   }, []);
+
+  // Load leaderboard data
+  const loadLeaderboardData = useCallback(async () => {
+    if (departments.length === 0) return;
+    
+    setLoadingLeaderboards(true);
+    try {
+      // Load global leaderboard
+      const global = await generateGlobalLeaderboard();
+      setGlobalLeaderboard(global);
+      
+      // Load department leaderboards
+      const deptBoards = {};
+      for (const dept of departments) {
+        const deptBoard = await generateDepartmentLeaderboard(dept);
+        deptBoards[dept] = deptBoard;
+      }
+      setDeptLeaderboards(deptBoards);
+      
+    } catch (error) {
+      console.error('Error loading leaderboard data:', error);
+      showNotification('Failed to load leaderboard data', 'error');
+    } finally {
+      setLoadingLeaderboards(false);
+    }
+  }, [departments]);
 
   // Load all data when tab changes or component mounts
   useEffect(() => {
@@ -192,6 +232,13 @@ export default function SuperAdminDashboard() {
     loadDepartmentAnalytics();
     loadUsersAndQuizzes();
   }, [superAdmin, loadPlatformStats, loadActivityLogs, loadSystemAlerts, loadDepartmentAnalytics, loadUsersAndQuizzes]);
+
+  // Load leaderboard data when leaderboard tab is active
+  useEffect(() => {
+    if (activeTab === 'leaderboard' && departments.length > 0) {
+      loadLeaderboardData();
+    }
+  }, [activeTab, departments, loadLeaderboardData]);
 
   // Set up real-time updates
   useEffect(() => {
@@ -323,52 +370,54 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-40">
+      <header className="bg-white dark:bg-gray-800 shadow-soft sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <FiShield className="text-red-600" />
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
+                <FiShield className="text-red-600 dark:text-red-400" />
                 SuperAdmin Dashboard
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
                 Global platform management and analytics
               </p>
             </div>
             
             <div className="flex items-center gap-4">
+              <ThemeToggle />
+              
               {/* Real-time indicator */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setRealTimeActive(!realTimeActive)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     realTimeActive 
-                      ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50' 
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
                 >
-                  <div className={`w-2 h-2 rounded-full ${realTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                  <div className={`w-2 h-2 rounded-full ${realTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400 dark:bg-gray-500'}`} />
                   {realTimeActive ? 'Live' : 'Offline'}
                 </button>
                 
                 <button
                   onClick={refreshAllData}
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 text-sm font-medium"
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 text-sm font-medium"
                 >
                   <FiRefreshCw size={16} />
                   Refresh
                 </button>
               </div>
 
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 Updated: {lastUpdated.toLocaleTimeString()}
               </span>
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium"
+                className="flex items-center gap-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm font-medium"
               >
                 <FiLogOut /> Logout
               </button>
@@ -398,7 +447,7 @@ export default function SuperAdminDashboard() {
       </AnimatePresence>
 
       {/* Navigation */}
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-white dark:bg-gray-800 shadow-soft">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex overflow-x-auto">
             {[
@@ -416,8 +465,8 @@ export default function SuperAdminDashboard() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap border-b-2 transition-colors ${
                   activeTab === tab.id 
-                    ? 'text-blue-600 border-blue-600' 
-                    : 'text-gray-500 hover:text-gray-700 border-transparent'
+                    ? 'text-primary-600 dark:text-primary-400 border-primary-600 dark:border-primary-400' 
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 border-transparent'
                 }`}
               >
                 {tab.icon} {tab.label}
@@ -727,45 +776,75 @@ export default function SuperAdminDashboard() {
         {/* Leaderboard Tab */}
         {activeTab === 'leaderboard' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-soft p-6">
               <div className="flex items-center justify-between mb-6">
-                                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                   <FiAward className="text-yellow-500" />
-                   Global Leaderboard Management
-                 </h2>
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                  <FiAward className="text-yellow-500" />
+                  Global Leaderboard Management
+                </h2>
                 <button
                   onClick={() => navigate('/leaderboard')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                   View Full Leaderboard
                 </button>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
-                  <h3 className="font-semibold text-gray-800 mb-2">Top Performers</h3>
-                  <p className="text-2xl font-bold text-yellow-600">View Rankings</p>
-                  <p className="text-sm text-gray-600">Monitor student performance across all departments</p>
-                </div>
-                
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                  <h3 className="font-semibold text-gray-800 mb-2">Competition Stats</h3>
-                  <p className="text-2xl font-bold text-blue-600">Real-time</p>
-                  <p className="text-sm text-gray-600">Track competitive engagement metrics</p>
-                </div>
-                
-                <div className="p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-lg border border-green-200">
-                  <h3 className="font-semibold text-gray-800 mb-2">Achievement System</h3>
-                  <p className="text-2xl font-bold text-green-600">Active</p>
-                  <p className="text-sm text-gray-600">Streaks, points, and performance tracking</p>
+              {/* Department Leaderboards */}
+              <div className="mb-6">
+                <h3 className="text-md font-semibold text-gray-700 dark:text-gray-300 mb-4">Department Rankings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {departments.map(dept => (
+                    <div key={dept} className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{dept}</h4>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {deptLeaderboards[dept]?.users?.length || 0} Students
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {deptLeaderboards[dept]?.users?.length > 0 
+                          ? `Top: ${deptLeaderboards[dept].users[0]?.fullName || 'N/A'} (${deptLeaderboards[dept].users[0]?.averagePercentage || 0}%)`
+                          : 'No data available'
+                        }
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
               
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <p className="text-center text-gray-600">
+              {/* Global Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Total Participants</h3>
+                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                    {globalLeaderboard?.totalParticipants || 0}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Across all departments</p>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 rounded-lg border border-green-200 dark:border-green-700">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Top Performer</h3>
+                  <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                    {globalLeaderboard?.users?.[0]?.fullName || 'N/A'}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {globalLeaderboard?.users?.[0]?.averagePercentage || 0}% • {globalLeaderboard?.users?.[0]?.department || 'N/A'}
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Active Departments</h3>
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    {departments.length}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">With active participants</p>
+                </div>
+              </div>
+              
+              <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-center text-gray-600 dark:text-gray-300">
                   🏆 Advanced leaderboard features include departmental rankings, global competition, streak tracking, and performance analytics.
                   <br />
-                  <span className="text-sm text-gray-500">Click "View Full Leaderboard" to access the complete ranking system.</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Click "View Full Leaderboard" to access the complete ranking system.</span>
                 </p>
               </div>
             </div>

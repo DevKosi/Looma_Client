@@ -30,7 +30,7 @@ export const TIME_PERIODS = {
 
 // Calculate user statistics from submissions
 export const calculateUserStats = (submissions) => {
-  if (!submissions.length) {
+  if (!submissions || !submissions.length) {
     return {
       totalQuizzes: 0,
       totalScore: 0,
@@ -86,6 +86,8 @@ export const calculateUserStats = (submissions) => {
 
 // Get submissions within time period
 export const getSubmissionsInPeriod = (submissions, period) => {
+  if (!submissions || !submissions.length) return [];
+  
   const now = new Date();
   let startDate;
 
@@ -120,6 +122,11 @@ export const fetchAllSubmissions = async () => {
     const quizzesQuery = query(collection(db, 'quizzes'));
     const quizzesSnapshot = await getDocs(quizzesQuery);
     
+    if (quizzesSnapshot.empty) {
+      console.log('📊 No quizzes found');
+      return [];
+    }
+    
     const allSubmissions = [];
     const submissionPromises = [];
 
@@ -139,11 +146,13 @@ export const fetchAllSubmissions = async () => {
               ...submissionDoc.data()
             });
           });
+        }).catch(error => {
+          console.warn(`⚠️ Error fetching submissions for quiz ${quizDoc.id}:`, error);
         })
       );
     });
 
-    await Promise.all(submissionPromises);
+    await Promise.allSettled(submissionPromises);
     
     console.log(`📊 Found ${allSubmissions.length} total submissions`);
     return allSubmissions;
@@ -158,12 +167,18 @@ export const generateDepartmentLeaderboard = async (department, rankingType = RA
   try {
     console.log(`🏆 Generating ${department} department leaderboard...`);
     
+    if (!department) {
+      throw new Error('Department is required');
+    }
+    
     const allSubmissions = await fetchAllSubmissions();
     
     // Filter by department
     const departmentSubmissions = allSubmissions.filter(
       submission => submission.department === department
     );
+
+    console.log(`📊 Found ${departmentSubmissions.length} submissions for ${department} department`);
 
     // Apply time period filter
     const periodSubmissions = getSubmissionsInPeriod(departmentSubmissions, timePeriod);
@@ -175,10 +190,10 @@ export const generateDepartmentLeaderboard = async (department, rankingType = RA
       if (!userSubmissions[userId]) {
         userSubmissions[userId] = {
           userId,
-          regNumber: submission.regNumber,
-          fullName: submission.fullName,
+          regNumber: submission.regNumber || 'N/A',
+          fullName: submission.fullName || 'Unknown User',
           department: submission.department,
-          email: submission.email,
+          email: submission.email || 'No email',
           submissions: []
         };
       }
@@ -212,8 +227,8 @@ export const generateDepartmentLeaderboard = async (department, rankingType = RA
           // Sort by recent submissions average
           const aRecent = a.submissions.slice(0, 5);
           const bRecent = b.submissions.slice(0, 5);
-          const aRecentAvg = aRecent.reduce((sum, s) => sum + (s.percentage || 0), 0) / aRecent.length;
-          const bRecentAvg = bRecent.reduce((sum, s) => sum + (s.percentage || 0), 0) / bRecent.length;
+          const aRecentAvg = aRecent.length > 0 ? aRecent.reduce((sum, s) => sum + (s.percentage || 0), 0) / aRecent.length : 0;
+          const bRecentAvg = bRecent.length > 0 ? bRecent.reduce((sum, s) => sum + (s.percentage || 0), 0) / bRecent.length : 0;
           return bRecentAvg - aRecentAvg;
         });
         break;
@@ -243,7 +258,8 @@ export const generateDepartmentLeaderboard = async (department, rankingType = RA
       timePeriod,
       users: limitedLeaderboard,
       totalParticipants: leaderboardData.length,
-      generatedAt: new Date()
+      generatedAt: new Date(),
+      hasData: limitedLeaderboard.length > 0
     };
 
   } catch (error) {
@@ -255,7 +271,8 @@ export const generateDepartmentLeaderboard = async (department, rankingType = RA
       users: [],
       totalParticipants: 0,
       generatedAt: new Date(),
-      error: error.message
+      error: error.message,
+      hasData: false
     };
   }
 };
@@ -267,6 +284,19 @@ export const generateGlobalLeaderboard = async (rankingType = RANKING_TYPES.AVER
     
     const allSubmissions = await fetchAllSubmissions();
     
+    if (allSubmissions.length === 0) {
+      console.log('📊 No submissions found for global leaderboard');
+      return {
+        scope: 'global',
+        rankingType,
+        timePeriod,
+        users: [],
+        totalParticipants: 0,
+        generatedAt: new Date(),
+        hasData: false
+      };
+    }
+    
     // Apply time period filter
     const periodSubmissions = getSubmissionsInPeriod(allSubmissions, timePeriod);
 
@@ -277,10 +307,10 @@ export const generateGlobalLeaderboard = async (rankingType = RANKING_TYPES.AVER
       if (!userSubmissions[userId]) {
         userSubmissions[userId] = {
           userId,
-          regNumber: submission.regNumber,
-          fullName: submission.fullName,
-          department: submission.department,
-          email: submission.email,
+          regNumber: submission.regNumber || 'N/A',
+          fullName: submission.fullName || 'Unknown User',
+          department: submission.department || 'Unknown',
+          email: submission.email || 'No email',
           submissions: []
         };
       }
@@ -313,8 +343,8 @@ export const generateGlobalLeaderboard = async (rankingType = RANKING_TYPES.AVER
         sortedLeaderboard = leaderboardData.sort((a, b) => {
           const aRecent = a.submissions.slice(0, 5);
           const bRecent = b.submissions.slice(0, 5);
-          const aRecentAvg = aRecent.reduce((sum, s) => sum + (s.percentage || 0), 0) / aRecent.length;
-          const bRecentAvg = bRecent.reduce((sum, s) => sum + (s.percentage || 0), 0) / bRecent.length;
+          const aRecentAvg = aRecent.length > 0 ? aRecent.reduce((sum, s) => sum + (s.percentage || 0), 0) / aRecent.length : 0;
+          const bRecentAvg = bRecent.length > 0 ? bRecent.reduce((sum, s) => sum + (s.percentage || 0), 0) / bRecent.length : 0;
           return bRecentAvg - aRecentAvg;
         });
         break;
@@ -341,7 +371,8 @@ export const generateGlobalLeaderboard = async (rankingType = RANKING_TYPES.AVER
       timePeriod,
       users: limitedLeaderboard,
       totalParticipants: leaderboardData.length,
-      generatedAt: new Date()
+      generatedAt: new Date(),
+      hasData: limitedLeaderboard.length > 0
     };
 
   } catch (error) {
@@ -353,7 +384,8 @@ export const generateGlobalLeaderboard = async (rankingType = RANKING_TYPES.AVER
       users: [],
       totalParticipants: 0,
       generatedAt: new Date(),
-      error: error.message
+      error: error.message,
+      hasData: false
     };
   }
 };
@@ -361,6 +393,11 @@ export const generateGlobalLeaderboard = async (rankingType = RANKING_TYPES.AVER
 // Get user's position in leaderboard
 export const getUserPosition = async (userId, department, rankingType = RANKING_TYPES.AVERAGE_SCORE, timePeriod = TIME_PERIODS.ALL_TIME) => {
   try {
+    if (!userId || !department) {
+      console.warn('⚠️ Missing userId or department for getUserPosition');
+      return null;
+    }
+    
     const departmentLeaderboard = await generateDepartmentLeaderboard(department, rankingType, timePeriod, 1000);
     const globalLeaderboard = await generateGlobalLeaderboard(rankingType, timePeriod, 1000);
     
@@ -371,12 +408,14 @@ export const getUserPosition = async (userId, department, rankingType = RANKING_
       department: {
         rank: departmentPosition?.rank || null,
         totalParticipants: departmentLeaderboard.totalParticipants,
-        stats: departmentPosition || null
+        stats: departmentPosition || null,
+        hasData: departmentLeaderboard.hasData
       },
       global: {
         rank: globalPosition?.rank || null,
         totalParticipants: globalLeaderboard.totalParticipants,
-        stats: globalPosition || null
+        stats: globalPosition || null,
+        hasData: globalLeaderboard.hasData
       }
     };
   } catch (error) {
@@ -387,8 +426,6 @@ export const getUserPosition = async (userId, department, rankingType = RANKING_
 
 // Real-time leaderboard listener
 export const subscribeToLeaderboardUpdates = (callback, department = null) => {
-  const listeners = [];
-  
   try {
     // Listen to all quizzes for changes
     const quizzesQuery = query(collection(db, 'quizzes'));
@@ -396,16 +433,26 @@ export const subscribeToLeaderboardUpdates = (callback, department = null) => {
     const unsubscribe = onSnapshot(quizzesQuery, async (snapshot) => {
       console.log('🔄 Leaderboard data updated, regenerating...');
       
-      // Regenerate leaderboards
-      const departmentLeaderboard = department ? 
-        await generateDepartmentLeaderboard(department) : null;
-      const globalLeaderboard = await generateGlobalLeaderboard();
-      
-      callback({
-        department: departmentLeaderboard,
-        global: globalLeaderboard,
-        lastUpdated: new Date()
-      });
+      try {
+        // Regenerate leaderboards
+        const departmentLeaderboard = department ? 
+          await generateDepartmentLeaderboard(department) : null;
+        const globalLeaderboard = await generateGlobalLeaderboard();
+        
+        callback({
+          department: departmentLeaderboard,
+          global: globalLeaderboard,
+          lastUpdated: new Date()
+        });
+      } catch (error) {
+        console.error('❌ Error regenerating leaderboards:', error);
+        callback({
+          department: null,
+          global: null,
+          error: error.message,
+          lastUpdated: new Date()
+        });
+      }
     });
     
     return unsubscribe;
