@@ -2,7 +2,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebaseConfig';
 import React, { useEffect, useState } from 'react';
-import { FiArrowLeft, FiArrowRight, FiCheck, FiClock } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiCheck, FiClock, FiAlertTriangle } from 'react-icons/fi';
 
 export default function QuizPage() {
   const { id } = useParams();
@@ -18,24 +18,57 @@ export default function QuizPage() {
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [submissionError, setSubmissionError] = useState(null);
+
+  // Shuffle function to randomize questions
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
 
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
         const quizRef = doc(db, 'quizzes', id);
         const quizSnap = await getDoc(quizRef);
-        if (!quizSnap.exists()) return navigate('/dashboard');
-
-        const quizData = quizSnap.data();
-        if (!quizData.questions || quizData.questions.length === 0) {
-          throw new Error('This quiz has no questions');
+        
+        if (!quizSnap.exists()) {
+          throw new Error('Quiz not found');
         }
 
-        setQuiz(quizData);
+        const quizData = quizSnap.data();
+        
+        if (!quizData.questions || quizData.questions.length === 0) {
+          throw new Error('This quiz has no questions available');
+        }
+
+        // Get the number of questions to render (default to all if not specified)
+        const questionsToRender = quizData.questionsToRender || quizData.questions.length;
+        
+        // Shuffle questions and take only the required number
+        const shuffledQuestions = shuffleArray(quizData.questions);
+        const selectedQuestions = shuffledQuestions.slice(0, Math.min(questionsToRender, quizData.questions.length));
+        
+        // Shuffle options within each question to prevent position-based cheating
+        const questionsWithShuffledOptions = selectedQuestions.map(question => ({
+          ...question,
+          options: question.options ? shuffleArray(question.options) : question.options
+        }));
+
+        setQuiz({
+          ...quizData,
+          questions: questionsWithShuffledOptions,
+          originalQuestionCount: quizData.questions.length
+        });
         setTimeLeft(quizData.timeLimit * 60);
       } catch (err) {
-        setError(err.message);
-        navigate('/dashboard');
+        console.error('Quiz fetch error:', err);
+        setError(err.message || 'Failed to load quiz');
+        setTimeout(() => navigate('/student-dashboard'), 3000);
       } finally {
         setLoading(false);
       }
@@ -77,6 +110,7 @@ export default function QuizPage() {
   const handleSubmit = async () => {
     if (!quiz || submitted) return;
     setSubmitted(true);
+    setSubmissionError(null);
 
     let correct = 0;
     quiz.questions.forEach(q => {
@@ -91,7 +125,31 @@ export default function QuizPage() {
 
     try {
       const currentUser = auth.currentUser;
-      if (!currentUser) return;
+      if (!currentUser) {
+        throw new Error('User not authenticated. Please log in again.');
+      }
+
+      // Fetch user data from Firestore to get registration number
+      console.log('Fetching user data for:', currentUser.uid);
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      
+      if (!userDoc.exists()) {
+        throw new Error('User profile not found. Please contact support.');
+      }
+
+      const userData = userDoc.data();
+      console.log('User data retrieved:', userData);
+      cursor/analyze-project-issues-and-data-flow-1ba1
+      if (!userData.regNumber) {
+        throw new Error('Registration number not found in profile. Please update your profile.');
+      }
+
+      const submissionData = {
+        userId: currentUser.uid,
+        regNumber: userData.regNumber,
+        fullName: userData.fullName || 'Unknown',
+        department: userData.department || 'Unknown',
+        email: userData.email || currentUser.email,
 
       // Fetch user data from Firestore to get registration number
       const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
@@ -102,20 +160,61 @@ export default function QuizPage() {
         regNumber: userData?.regNumber || 'Anonymous',
         fullName: userData?.fullName || 'Unknown',
         department: userData?.department || 'Unknown',
+        main
         score: correct,
         total: quiz.questions.length,
-        accessCode,
+        percentage: Math.round((correct / quiz.questions.length) * 100),
+        accessCode: accessCode || 'direct',
         submittedAt: serverTimestamp(),
         answers,
-      });
+        quizTitle: quiz.title,
+        timeSpent: (quiz.timeLimit * 60) - timeLeft,
+      };
+
+      console.log('Submitting data:', submissionData);
+      await addDoc(collection(db, 'quizzes', id, 'submissions'), submissionData);
+      console.log('Submission successful');
+      
     } catch (err) {
-      console.error('Failed to save result:', err);
+      console.error('Submission error:', err);
+      setSubmissionError(err.message || 'Failed to submit quiz. Please try again.');
+      setSubmitted(false); // Allow retry
     }
   };
 
-  if (loading) return <div className="h-screen flex justify-center items-center">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="h-screen flex justify-center items-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading quiz...</p>
+        </div>
+      </div>
+    );
+  }
 
-  if (submitted) {
+  if (error) {
+    return (
+      <div className="h-screen flex justify-center items-center bg-gray-50 p-6">
+        <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md w-full">
+          <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+            <FiAlertTriangle className="text-red-600 text-2xl" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Quiz Error</h1>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-sm text-gray-500 mb-4">Redirecting to dashboard...</p>
+          <button
+            onClick={() => navigate('/student-dashboard')}
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (submitted && !submissionError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
         <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md w-full">
@@ -123,9 +222,12 @@ export default function QuizPage() {
             <FiCheck className="text-green-600 text-2xl" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Quiz Completed!</h1>
-          <p className="text-gray-600 mt-2 mb-6">
+          <p className="text-gray-600 mt-2 mb-2">
             You scored <span className="text-blue-600 font-bold">{score}</span> out of{' '}
             <span className="font-semibold">{quiz.questions.length}</span>
+          </p>
+          <p className="text-gray-500 text-sm mb-6">
+            Percentage: <span className="font-semibold">{Math.round((score / quiz.questions.length) * 100)}%</span>
           </p>
           <button
             onClick={() => navigate('/student-dashboard')}
@@ -186,6 +288,25 @@ export default function QuizPage() {
             </button>
           ))}
         </div>
+
+        {/* Submission error display */}
+        {submissionError && (
+          <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center">
+              <FiAlertTriangle className="text-red-600 mr-2" />
+              <div>
+                <p className="text-red-800 font-medium">Submission Failed</p>
+                <p className="text-red-600 text-sm">{submissionError}</p>
+                <button
+                  onClick={() => setSubmissionError(null)}
+                  className="mt-2 text-red-600 hover:text-red-800 text-sm underline"
+                >
+                  Try submitting again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Question area */}
         <div className="p-6">
