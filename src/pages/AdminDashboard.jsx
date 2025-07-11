@@ -1,0 +1,1182 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { auth, db } from '../firebase/firebaseConfig';
+import { 
+  collection, doc, getDoc, getDocs, addDoc, 
+  updateDoc, deleteDoc, query, where, writeBatch,
+  serverTimestamp, runTransaction
+} from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FiPlus, FiLogOut, FiList, FiTrash2, FiEdit2, 
+  FiUpload, FiCodesandbox, FiClock, FiUsers, 
+  FiBarChart2, FiCheck, FiX, FiSave, FiBook,
+  FiDownload, FiEye, FiEyeOff
+} from 'react-icons/fi';
+import { CSVLink } from 'react-csv';
+
+const AdminDashboard = () => {
+  // State management
+  const [admin, setAdmin] = useState(null);
+  const [quizzes, setQuizzes] = useState([]);
+  const [activeTab, setActiveTab] = useState('create');
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    timeLimit: 30,
+    status: 'draft',
+    questions: []
+  });
+  const [loading, setLoading] = useState({
+    admin: true,
+    quizzes: false,
+    action: false,
+    results: false
+  });
+  const [notification, setNotification] = useState(null);
+  const [bulkCodes, setBulkCodes] = useState('');
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const [stats, setStats] = useState({
+    totalQuizzes: 0,
+    activeQuizzes: 0,
+    draftQuizzes: 0,
+    totalParticipants: 0
+  });
+  const [results, setResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
+  const [editingQuiz, setEditingQuiz] = useState(null);
+
+  const navigate = useNavigate();
+
+  // Question types
+  const QUESTION_TYPES = {
+    MULTIPLE_CHOICE: 'multiple_choice',
+    TRUE_FALSE: 'true_false',
+    SHORT_ANSWER: 'short_answer'
+  };
+
+  // Fetch admin data
+  const fetchAdminData = useCallback(async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return navigate('/login');
+
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists() && userSnap.data().role === 'admin') {
+        setAdmin({ ...userSnap.data(), uid: user.uid });
+        fetchQuizzes(userSnap.data().department);
+        fetchStats(userSnap.data().department);
+      } else {
+        navigate('/login');
+      }
+    } catch (error) {
+      showNotification('Failed to load admin data', 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, admin: false }));
+    }
+  }, [navigate]);
+
+  // Fetch quizzes for admin's department
+  const fetchQuizzes = useCallback(async (department) => {
+    setLoading(prev => ({ ...prev, quizzes: true }));
+    try {
+      const q = query(
+        collection(db, 'quizzes'),
+        where('department', '==', department),
+        where('createdBy', '==', auth.currentUser.uid)
+      );
+      const snapshot = await getDocs(q);
+      const quizzesData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setQuizzes(quizzesData);
+    } catch (error) {
+      showNotification('Failed to fetch quizzes', 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, quizzes: false }));
+    }
+  }, []);
+
+  // Fetch platform stats
+  const fetchStats = useCallback(async (department) => {
+    try {
+      const q = query(
+        collection(db, 'quizzes'),
+        where('department', '==', department)
+      );
+      const snapshot = await getDocs(q);
+      
+      const total = snapshot.size;
+      const active = snapshot.docs.filter(doc => doc.data().status === 'approved').length;
+      const draft = snapshot.docs.filter(doc => doc.data().status === 'draft').length;
+
+      // Calculate total participants (simplified example)
+      let participants = 0;
+      for (const quizDoc of snapshot.docs) {
+        const resultsRef = collection(db, 'quizzes', quizDoc.id, 'results');
+        const resultsSnap = await getDocs(resultsRef);
+        participants += resultsSnap.size;
+      }
+
+      setStats({
+        totalQuizzes: total,
+        activeQuizzes: active,
+        draftQuizzes: draft,
+        totalParticipants: participants
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  }, []);
+
+  // Fetch quiz results
+  const fetchResults = useCallback(async (quizId) => {
+    setLoading(prev => ({ ...prev, results: true }));
+    try {
+      const resultsRef = collection(db, 'quizzes', quizId, 'results');
+      const snapshot = await getDocs(resultsRef);
+      const resultsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: doc.data().timestamp?.toDate().toLocaleString()
+      }));
+      setResults(resultsData);
+    } catch (error) {
+      showNotification('Failed to fetch results', 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, results: false }));
+    }
+  }, []);
+
+  // Initialize data fetching
+  useEffect(() => {
+    fetchAdminData();
+  }, [fetchAdminData]);
+
+  // Load results when quiz is selected
+  useEffect(() => {
+    if (selectedQuiz && activeTab === 'manage') {
+      fetchResults(selectedQuiz);
+    }
+  }, [selectedQuiz, activeTab, fetchResults]);
+
+  // Notification handler
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000);
+  };
+
+  // Form input handler
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Create new quiz
+  const handleCreateQuiz = async (e) => {
+    e.preventDefault();
+    setLoading(prev => ({ ...prev, action: true }));
+
+    try {
+      const quizData = {
+        ...formData,
+        department: admin.department,
+        createdBy: admin.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      // Validate at least one question exists
+      if (quizData.questions.length === 0) {
+        throw new Error('Please add at least one question');
+      }
+
+      const quizRef = await addDoc(collection(db, 'quizzes'), quizData);
+
+      showNotification('Quiz created successfully!');
+      setFormData({
+        title: '',
+        description: '',
+        timeLimit: 30,
+        status: 'draft',
+        questions: []
+      });
+      setSelectedQuiz(quizRef.id);
+      fetchQuizzes(admin.department);
+      fetchStats(admin.department);
+    } catch (error) {
+      showNotification(error.message, 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, action: false }));
+    }
+  };
+
+  // Update quiz with transaction
+  const handleUpdateQuiz = async (quizId, updates) => {
+    setLoading(prev => ({ ...prev, action: true }));
+    try {
+      await runTransaction(db, async (transaction) => {
+        const quizRef = doc(db, 'quizzes', quizId);
+        const quizDoc = await transaction.get(quizRef);
+        
+        if (!quizDoc.exists()) {
+          throw new Error("Quiz does not exist!");
+        }
+
+        // Verify the user is the creator
+        if (quizDoc.data().createdBy !== auth.currentUser.uid) {
+          throw new Error("Unauthorized update attempt");
+        }
+
+        transaction.update(quizRef, {
+          ...updates,
+          updatedAt: serverTimestamp()
+        });
+      });
+
+      showNotification('Quiz updated successfully!');
+      fetchQuizzes(admin.department);
+      fetchStats(admin.department);
+      
+      // If editing current quiz, update form data
+      if (editingQuiz?.id === quizId) {
+        setFormData(prev => ({ ...prev, ...updates }));
+      }
+    } catch (error) {
+      showNotification(error.message, 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, action: false }));
+    }
+  };
+
+  // Delete quiz with transaction
+  const handleDeleteQuiz = async (quizId) => {
+    if (!window.confirm('Are you sure you want to delete this quiz and all its data?')) return;
+    
+    setLoading(prev => ({ ...prev, action: true }));
+    try {
+      await runTransaction(db, async (transaction) => {
+        const quizRef = doc(db, 'quizzes', quizId);
+        const quizDoc = await transaction.get(quizRef);
+        
+        if (!quizDoc.exists()) {
+          throw new Error("Quiz does not exist!");
+        }
+
+        // Verify the user is the creator
+        if (quizDoc.data().createdBy !== auth.currentUser.uid) {
+          throw new Error("Unauthorized deletion attempt");
+        }
+
+        // Delete quiz document
+        transaction.delete(quizRef);
+        
+        // Delete all codes for this quiz
+        const codesQuery = query(collection(db, 'quizzes', quizId, 'codes'));
+        const codesSnapshot = await getDocs(codesQuery);
+        codesSnapshot.forEach(doc => {
+          transaction.delete(doc.ref);
+        });
+
+        // Delete all results for this quiz
+        const resultsQuery = query(collection(db, 'quizzes', quizId, 'results'));
+        const resultsSnapshot = await getDocs(resultsQuery);
+        resultsSnapshot.forEach(doc => {
+          transaction.delete(doc.ref);
+        });
+      });
+
+      showNotification('Quiz and all associated data deleted successfully!');
+      fetchQuizzes(admin.department);
+      fetchStats(admin.department);
+      setSelectedQuiz(null);
+      setEditingQuiz(null);
+    } catch (error) {
+      showNotification(`Deletion failed: ${error.message}`, 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, action: false }));
+    }
+  };
+
+  // Bulk upload access codes
+  const handleBulkUploadCodes = async () => {
+    if (!selectedQuiz || !bulkCodes.trim()) return;
+    
+    setLoading(prev => ({ ...prev, action: true }));
+    try {
+      const codes = bulkCodes.split(/\s+/).filter(code => code.trim().length > 0);
+      const batch = writeBatch(db);
+      
+      codes.forEach(code => {
+        const codeRef = doc(collection(db, 'quizzes', selectedQuiz, 'codes'), code);
+        batch.set(codeRef, { 
+          code, 
+          used: false, 
+          usedBy: null,
+          createdAt: serverTimestamp() 
+        });
+      });
+
+      await batch.commit();
+      showNotification(`${codes.length} codes uploaded successfully!`);
+      setBulkCodes('');
+    } catch (error) {
+      showNotification('Failed to upload codes', 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, action: false }));
+    }
+  };
+
+  // Clear quiz results
+  const clearResults = async (quizId) => {
+    if (!window.confirm('Permanently delete all results for this quiz?')) return;
+    
+    setLoading(prev => ({ ...prev, action: true }));
+    try {
+      const batch = writeBatch(db);
+      const resultsRef = collection(db, 'quizzes', quizId, 'results');
+      const snapshot = await getDocs(resultsRef);
+      
+      snapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      
+      await batch.commit();
+      setResults([]);
+      showNotification('Results cleared successfully');
+      fetchStats(admin.department); // Update stats
+    } catch (error) {
+      showNotification('Failed to clear results', 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, action: false }));
+    }
+  };
+
+  // Question management functions
+  const addQuestion = (newQuestion) => {
+    if (!newQuestion.text.trim()) return;
+    
+    const updatedQuestions = [
+      ...formData.questions,
+      {
+        ...newQuestion,
+        id: Date.now().toString()
+      }
+    ];
+
+    setFormData({
+      ...formData,
+      questions: updatedQuestions
+    });
+  };
+
+  const updateQuestion = (questionId, updates) => {
+    setFormData({
+      ...formData,
+      questions: formData.questions.map(q => 
+        q.id === questionId ? { ...q, ...updates } : q
+      )
+    });
+  };
+
+  const removeQuestion = (questionId) => {
+    setFormData({
+      ...formData,
+      questions: formData.questions.filter(q => q.id !== questionId)
+    });
+  };
+
+  // Start editing an existing quiz
+  const startEditingQuiz = (quiz) => {
+    setEditingQuiz(quiz);
+    setFormData({
+      title: quiz.title,
+      description: quiz.description,
+      timeLimit: quiz.timeLimit,
+      status: quiz.status,
+      questions: quiz.questions || []
+    });
+    setActiveTab('create');
+  };
+
+  // Cancel editing
+  const cancelEditing = () => {
+    setEditingQuiz(null);
+    setFormData({
+      title: '',
+      description: '',
+      timeLimit: 30,
+      status: 'draft',
+      questions: []
+    });
+  };
+
+  // Logout handler
+  const handleLogout = async () => {
+    await auth.signOut();
+    navigate('/login');
+  };
+
+  if (loading.admin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">Admin Dashboard</h1>
+            <p className="text-sm text-gray-600">
+              {admin?.department} Department
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-red-600 hover:text-red-700"
+          >
+            <FiLogOut /> Logout
+          </button>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <StatCard 
+            icon={<FiCodesandbox className="text-blue-500" size={20} />}
+            title="Total Quizzes"
+            value={stats.totalQuizzes}
+            loading={loading.quizzes}
+          />
+          <StatCard 
+            icon={<FiBarChart2 className="text-green-500" size={20} />}
+            title="Active Quizzes"
+            value={stats.activeQuizzes}
+            loading={loading.quizzes}
+          />
+          <StatCard 
+            icon={<FiClock className="text-yellow-500" size={20} />}
+            title="Draft Quizzes"
+            value={stats.draftQuizzes}
+            loading={loading.quizzes}
+          />
+          <StatCard 
+            icon={<FiUsers className="text-purple-500" size={20} />}
+            title="Total Participants"
+            value={stats.totalParticipants}
+            loading={loading.quizzes}
+          />
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 mb-6">
+          <button
+            onClick={() => {
+              setActiveTab('create');
+              setEditingQuiz(null);
+            }}
+            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
+              activeTab === 'create' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FiPlus /> {editingQuiz ? 'Edit Quiz' : 'Create Quiz'}
+          </button>
+          <button
+            onClick={() => setActiveTab('manage')}
+            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
+              activeTab === 'manage' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FiList /> Manage Quizzes
+          </button>
+          <button
+            onClick={() => setActiveTab('questions')}
+            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
+              activeTab === 'questions' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FiBook /> Manage Questions
+          </button>
+        </div>
+
+        {/* Notification */}
+        <AnimatePresence>
+          {notification && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className={`p-3 rounded-md mb-6 ${
+                notification.type === 'error' 
+                  ? 'bg-red-50 text-red-700' 
+                  : 'bg-green-50 text-green-700'
+              }`}
+            >
+              {notification.message}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Create/Edit Quiz Form */}
+        {activeTab === 'create' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-white rounded-lg shadow-sm p-6"
+          >
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              {editingQuiz ? 'Edit Quiz' : 'Create New Quiz'}
+            </h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (editingQuiz) {
+                handleUpdateQuiz(editingQuiz.id, formData);
+              } else {
+                handleCreateQuiz(e);
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  rows="3"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                ></textarea>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Time Limit (minutes)</label>
+                  <input
+                    type="number"
+                    name="timeLimit"
+                    min="1"
+                    value={formData.timeLimit}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="pending">Submit for Approval</option>
+                    {editingQuiz?.status === 'approved' && <option value="approved">Approved</option>}
+                  </select>
+                </div>
+              </div>
+
+              {/* Question Editor */}
+              <QuestionEditor 
+                questions={formData.questions}
+                addQuestion={addQuestion}
+                updateQuestion={updateQuestion}
+                removeQuestion={removeQuestion}
+              />
+
+              <div className="pt-2 flex justify-between">
+                {editingQuiz && (
+                  <button
+                    type="button"
+                    onClick={cancelEditing}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel Editing
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading.action || formData.questions.length === 0}
+                  className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-50 ${
+                    editingQuiz ? 'ml-auto' : 'w-full'
+                  }`}
+                >
+                  {loading.action ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <FiSave /> {editingQuiz ? 'Update Quiz' : 'Create Quiz'}
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+
+        {/* Manage Quizzes */}
+        {activeTab === 'manage' && (
+          <div className="space-y-6">
+            {loading.quizzes ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : quizzes.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+                <p className="text-gray-500">No quizzes found</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="grid grid-cols-12 bg-gray-50 p-4 border-b border-gray-200 font-medium text-sm text-gray-500">
+                  <div className="col-span-5">Title</div>
+                  <div className="col-span-2">Status</div>
+                  <div className="col-span-2">Questions</div>
+                  <div className="col-span-3">Actions</div>
+                </div>
+
+                {quizzes.map(quiz => (
+                  <motion.div 
+                    key={quiz.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="grid grid-cols-12 p-4 border-b border-gray-200 items-center hover:bg-gray-50"
+                  >
+                    <div className="col-span-5 font-medium text-gray-800">
+                      {quiz.title}
+                      <p className="text-sm text-gray-500 truncate">{quiz.description}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        quiz.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        quiz.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {quiz.status}
+                      </span>
+                    </div>
+                    <div className="col-span-2 text-gray-600">
+                      {quiz.questions?.length || 0}
+                    </div>
+                    <div className="col-span-3 flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedQuiz(quiz.id);
+                          setBulkCodes('');
+                        }}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                        title="Upload Codes"
+                      >
+                        <FiUpload size={16} />
+                      </button>
+                      <button
+                        onClick={() => startEditingQuiz(quiz)}
+                        className="p-2 text-yellow-600 hover:bg-yellow-50 rounded"
+                        title="Edit Quiz"
+                      >
+                        <FiEdit2 size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteQuiz(quiz.id)}
+                        disabled={loading.action}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                        title="Delete Quiz"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {/* Bulk Code Upload */}
+            {selectedQuiz && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="bg-white rounded-lg shadow-sm p-6"
+              >
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <FiUpload /> Upload Access Codes
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Paste codes below (one per line or separated by spaces)
+                </p>
+                <textarea
+                  value={bulkCodes}
+                  onChange={(e) => setBulkCodes(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                  rows="6"
+                  placeholder="CODE1 CODE2 CODE3..."
+                ></textarea>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setSelectedQuiz(null);
+                      setBulkCodes('');
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleBulkUploadCodes}
+                    disabled={!bulkCodes.trim() || loading.action}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {loading.action ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <FiUpload /> Upload Codes
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Results Section */}
+            {selectedQuiz && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <FiBarChart2 /> Quiz Results
+                  </h3>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowResults(!showResults)}
+                      className="flex items-center gap-2 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded"
+                    >
+                      {showResults ? <FiEyeOff /> : <FiEye />}
+                      {showResults ? 'Hide' : 'Show'} Results
+                    </button>
+                    <CSVLink 
+                      data={results}
+                      filename={`quiz-results-${selectedQuiz}.csv`}
+                      className="flex items-center gap-2 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded"
+                    >
+                      <FiDownload /> Export
+                    </CSVLink>
+                    <button
+                      onClick={() => clearResults(selectedQuiz)}
+                      className="flex items-center gap-2 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded"
+                    >
+                      <FiTrash2 /> Clear All
+                    </button>
+                  </div>
+                </div>
+
+                {showResults && (
+                  <div className="overflow-x-auto">
+                    {loading.results ? (
+                      <div className="flex justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+                      </div>
+                    ) : results.length === 0 ? (
+                      <p className="text-gray-500 text-center py-4">No results available</p>
+                    ) : (
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Submitted</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {results.map((result) => (
+                            <tr key={result.id}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {result.userEmail || 'Anonymous'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                {result.score} / {result.totalPossible}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {result.timestamp}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Manage Questions */}
+        {activeTab === 'questions' && (
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              {selectedQuiz ? `Editing: ${quizzes.find(q => q.id === selectedQuiz)?.title}` : 'Select a Quiz to Edit Questions'}
+            </h2>
+            
+            {selectedQuiz ? (
+              <QuestionEditor
+                questions={quizzes.find(q => q.id === selectedQuiz)?.questions || []}
+                addQuestion={(newQuestion) => {
+                  const quiz = quizzes.find(q => q.id === selectedQuiz);
+                  const updatedQuestions = [...quiz.questions, newQuestion];
+                  handleUpdateQuiz(selectedQuiz, { questions: updatedQuestions });
+                }}
+                updateQuestion={(questionId, updates) => {
+                  const quiz = quizzes.find(q => q.id === selectedQuiz);
+                  const updatedQuestions = quiz.questions.map(q => 
+                    q.id === questionId ? { ...q, ...updates } : q
+                  );
+                  handleUpdateQuiz(selectedQuiz, { questions: updatedQuestions });
+                }}
+                removeQuestion={(questionId) => {
+                  const quiz = quizzes.find(q => q.id === selectedQuiz);
+                  const updatedQuestions = quiz.questions.filter(q => q.id !== questionId);
+                  handleUpdateQuiz(selectedQuiz, { questions: updatedQuestions });
+                }}
+              />
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <FiBook className="mx-auto text-3xl mb-2" />
+                <p>Please select a quiz from the list below to edit questions</p>
+                
+                <div className="mt-6 space-y-3 max-w-md mx-auto">
+                  {quizzes.map(quiz => (
+                    <motion.div
+                      key={quiz.id}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setSelectedQuiz(quiz.id)}
+                      className="p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
+                    >
+                      <h3 className="font-medium">{quiz.title}</h3>
+                      <p className="text-sm text-gray-500">
+                        {quiz.questions?.length || 0} questions • {quiz.status}
+                      </p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+// StatCard Component
+const StatCard = ({ icon, title, value, loading }) => (
+  <div className="bg-white rounded-lg shadow-sm p-4">
+    <div className="flex items-center gap-3">
+      <div className="p-2 bg-gray-100 rounded-full">
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm text-gray-500">{title}</p>
+        {loading ? (
+          <div className="h-6 w-12 bg-gray-200 rounded mt-1 animate-pulse"></div>
+        ) : (
+          <p className="text-xl font-semibold text-gray-800">{value}</p>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+// QuestionEditor Component
+const QuestionEditor = ({ questions, addQuestion, updateQuestion, removeQuestion }) => {
+  const [newQuestion, setNewQuestion] = useState({
+    text: '',
+    type: 'multiple_choice',
+    options: [{ id: Date.now().toString(), text: '', correct: false }],
+    points: 1
+  });
+
+  const handleAddQuestion = () => {
+    if (!newQuestion.text.trim()) return;
+    
+    const questionToAdd = {
+      ...newQuestion,
+      id: Date.now().toString()
+    };
+
+    // Handle different question types
+    if (newQuestion.type === 'true_false') {
+      delete questionToAdd.options;
+      questionToAdd.correctAnswer = true;
+    } else if (newQuestion.type === 'short_answer') {
+      delete questionToAdd.options;
+    }
+
+    addQuestion(questionToAdd);
+    resetQuestionForm();
+  };
+
+  const handleAddOption = () => {
+    setNewQuestion({
+      ...newQuestion,
+      options: [
+        ...newQuestion.options,
+        { id: Date.now().toString(), text: '', correct: false }
+      ]
+    });
+  };
+
+  const handleUpdateOption = (optionId, updates) => {
+    setNewQuestion({
+      ...newQuestion,
+      options: newQuestion.options.map(opt =>
+        opt.id === optionId ? { ...opt, ...updates } : opt
+      )
+    });
+  };
+
+  const handleRemoveOption = (optionId) => {
+    setNewQuestion({
+      ...newQuestion,
+      options: newQuestion.options.filter(opt => opt.id !== optionId)
+    });
+  };
+
+  const resetQuestionForm = () => {
+    setNewQuestion({
+      text: '',
+      type: 'multiple_choice',
+      options: [{ id: Date.now().toString(), text: '', correct: false }],
+      points: 1
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Existing Questions */}
+      <div className="space-y-4">
+        {questions.map((question, index) => (
+          <motion.div
+            key={question.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <h4 className="font-medium text-gray-800">
+                  Q{index + 1}: {question.text}
+                </h4>
+                <p className="text-sm text-gray-500 mt-1">
+                  {question.type === 'multiple_choice' ? (
+                    `Multiple Choice (${question.options?.filter(o => o.correct).length} correct)`
+                  ) : question.type === 'true_false' ? (
+                    `True/False (Correct: ${question.correctAnswer ? 'True' : 'False'})`
+                  ) : (
+                    'Short Answer'
+                  )} • {question.points} point{question.points !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    // Prepare the question for editing
+                    const editQuestion = { ...question };
+                    if (question.type === 'multiple_choice') {
+                      editQuestion.options = question.options.map(opt => ({ ...opt }));
+                    }
+                    setNewQuestion(editQuestion);
+                  }}
+                  className="text-blue-500 hover:text-blue-700 p-1"
+                >
+                  <FiEdit2 size={16} />
+                </button>
+                <button
+                  onClick={() => removeQuestion(question.id)}
+                  className="text-red-500 hover:text-red-700 p-1"
+                >
+                  <FiTrash2 size={16} />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Add New Question */}
+      <div className="bg-blue-50 p-4 rounded-lg">
+        <h3 className="font-medium text-blue-800 mb-3">Add New Question</h3>
+        
+        <div className="space-y-4">
+          {/* Question Text */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Question Text
+            </label>
+            <input
+              type="text"
+              value={newQuestion.text}
+              onChange={(e) => setNewQuestion({...newQuestion, text: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter your question"
+            />
+          </div>
+
+          {/* Question Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Question Type
+            </label>
+            <select
+              value={newQuestion.type}
+              onChange={(e) => setNewQuestion({
+                ...newQuestion, 
+                type: e.target.value,
+                // Reset options when changing type
+                options: e.target.value === 'multiple_choice' 
+                  ? [{ id: Date.now().toString(), text: '', correct: false }]
+                  : undefined,
+                correctAnswer: e.target.value === 'true_false' ? true : undefined
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="multiple_choice">Multiple Choice</option>
+              <option value="true_false">True/False</option>
+              <option value="short_answer">Short Answer</option>
+            </select>
+          </div>
+
+          {/* Points */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Points
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={newQuestion.points}
+              onChange={(e) => setNewQuestion({
+                ...newQuestion, 
+                points: parseInt(e.target.value) || 1
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          {/* Options (for multiple choice) */}
+          {newQuestion.type === 'multiple_choice' && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Options
+              </label>
+              {newQuestion.options.map((option, idx) => (
+                <div key={option.id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={option.correct}
+                    onChange={() => handleUpdateOption(option.id, { correct: !option.correct })}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <input
+                    type="text"
+                    value={option.text}
+                    onChange={(e) => handleUpdateOption(option.id, { text: e.target.value })}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder={`Option ${idx + 1}`}
+                  />
+                  <button
+                    onClick={() => handleRemoveOption(option.id)}
+                    className="text-red-500 hover:text-red-700 p-1"
+                  >
+                    <FiX size={16} />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={handleAddOption}
+                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+              >
+                <FiPlus size={14} /> Add Option
+              </button>
+            </div>
+          )}
+
+          {/* True/False Answer */}
+          {newQuestion.type === 'true_false' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Correct Answer
+              </label>
+              <div className="flex gap-4">
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    checked={newQuestion.correctAnswer === true}
+                    onChange={() => setNewQuestion({...newQuestion, correctAnswer: true})}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  />
+                  <span className="ml-2 text-gray-700">True</span>
+                </label>
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    checked={newQuestion.correctAnswer === false}
+                    onChange={() => setNewQuestion({...newQuestion, correctAnswer: false})}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  />
+                  <span className="ml-2 text-gray-700">False</span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Add Question Button */}
+          <button
+            type="button"
+            onClick={handleAddQuestion}
+            disabled={!newQuestion.text.trim() || 
+              (newQuestion.type === 'multiple_choice' && 
+               newQuestion.options.some(o => !o.text.trim()))}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50"
+          >
+            <FiPlus size={16} /> Add Question
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AdminDashboard;
