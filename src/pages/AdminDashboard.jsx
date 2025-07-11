@@ -24,6 +24,7 @@ const AdminDashboard = () => {
     title: '',
     description: '',
     timeLimit: 30,
+    questionsToRender: '',
     status: 'draft',
     questions: []
   });
@@ -396,6 +397,7 @@ const AdminDashboard = () => {
       title: quiz.title,
       description: quiz.description,
       timeLimit: quiz.timeLimit,
+      questionsToRender: quiz.questionsToRender || '',
       status: quiz.status,
       questions: quiz.questions || []
     });
@@ -409,6 +411,7 @@ const AdminDashboard = () => {
       title: '',
       description: '',
       timeLimit: 30,
+      questionsToRender: '',
       status: 'draft',
       questions: []
     });
@@ -500,6 +503,14 @@ const AdminDashboard = () => {
             <FiList /> Manage Quizzes
           </button>
           <button
+            onClick={() => setActiveTab('results')}
+            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
+              activeTab === 'results' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FiBarChart2 /> Quiz Results
+          </button>
+          <button
             onClick={() => setActiveTab('questions')}
             className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
               activeTab === 'questions' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
@@ -568,7 +579,7 @@ const AdminDashboard = () => {
                 ></textarea>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Time Limit (minutes)</label>
                   <input
@@ -580,6 +591,20 @@ const AdminDashboard = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Questions to Render</label>
+                  <input
+                    type="number"
+                    name="questionsToRender"
+                    min="1"
+                    value={formData.questionsToRender || formData.questions.length}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="All questions"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Number of questions to show per quiz attempt</p>
                 </div>
 
                 <div>
@@ -655,9 +680,10 @@ const AdminDashboard = () => {
             ) : (
               <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                 <div className="grid grid-cols-12 bg-gray-50 p-4 border-b border-gray-200 font-medium text-sm text-gray-500">
-                  <div className="col-span-5">Title</div>
+                  <div className="col-span-4">Title</div>
                   <div className="col-span-2">Status</div>
-                  <div className="col-span-2">Questions</div>
+                  <div className="col-span-2">Questions Pool</div>
+                  <div className="col-span-1">Renders</div>
                   <div className="col-span-3">Actions</div>
                 </div>
 
@@ -668,7 +694,7 @@ const AdminDashboard = () => {
                     animate={{ opacity: 1 }}
                     className="grid grid-cols-12 p-4 border-b border-gray-200 items-center hover:bg-gray-50"
                   >
-                    <div className="col-span-5 font-medium text-gray-800">
+                    <div className="col-span-4 font-medium text-gray-800">
                       {quiz.title}
                       <p className="text-sm text-gray-500 truncate">{quiz.description}</p>
                     </div>
@@ -682,7 +708,10 @@ const AdminDashboard = () => {
                       </span>
                     </div>
                     <div className="col-span-2 text-gray-600">
-                      {quiz.questions?.length || 0}
+                      {quiz.questions?.length || 0} questions
+                    </div>
+                    <div className="col-span-1 text-gray-600 text-sm">
+                      {quiz.questionsToRender || 'All'}
                     </div>
                     <div className="col-span-3 flex items-center gap-2">
                       <button
@@ -769,71 +798,190 @@ const AdminDashboard = () => {
               </motion.div>
             )}
 
-            {/* Results Section */}
+
+                      </div>
+          )}
+
+        {/* Quiz Results Tab */}
+        {activeTab === 'results' && (
+          <div className="space-y-6">
+            {/* Quiz Selection for Results */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">Select Quiz to View Results</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {quizzes.map(quiz => (
+                  <motion.div
+                    key={quiz.id}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setSelectedQuiz(quiz.id);
+                      fetchResults(quiz.id);
+                    }}
+                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                      selectedQuiz === quiz.id 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <h3 className="font-medium text-gray-800">{quiz.title}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{quiz.description}</p>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        quiz.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        quiz.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {quiz.status}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {quiz.questions?.length || 0} questions
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Results Display */}
             {selectedQuiz && (
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <FiBarChart2 /> Quiz Results
-                  </h3>
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                      <FiBarChart2 /> Results for: {quizzes.find(q => q.id === selectedQuiz)?.title}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Total Submissions: {results.length}
+                    </p>
+                  </div>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowResults(!showResults)}
-                      className="flex items-center gap-2 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded"
-                    >
-                      {showResults ? <FiEyeOff /> : <FiEye />}
-                      {showResults ? 'Hide' : 'Show'} Results
-                    </button>
                     <CSVLink 
-                      data={results}
-                      filename={`quiz-results-${selectedQuiz}.csv`}
-                      className="flex items-center gap-2 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded"
+                      data={results.map(result => ({
+                        'Registration Number': result.regNumber,
+                        'Full Name': result.fullName,
+                        'Department': result.department,
+                        'Email': result.email,
+                        'Score': result.score,
+                        'Total': result.total,
+                        'Percentage': result.percentage + '%',
+                        'Time Spent (mins)': Math.round((result.timeSpent || 0) / 60),
+                        'Submitted At': result.timestamp,
+                        'Quiz Title': result.quizTitle
+                      }))}
+                      filename={`quiz-results-${quizzes.find(q => q.id === selectedQuiz)?.title}-${new Date().toISOString().split('T')[0]}.csv`}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg transition-colors"
                     >
-                      <FiDownload /> Export
+                      <FiDownload /> Export CSV
                     </CSVLink>
                     <button
                       onClick={() => clearResults(selectedQuiz)}
-                      className="flex items-center gap-2 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded"
+                      className="flex items-center gap-2 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg transition-colors"
                     >
-                      <FiTrash2 /> Clear All
+                      <FiTrash2 /> Clear All Results
                     </button>
                   </div>
                 </div>
 
-                {showResults && (
+                {loading.results ? (
+                  <div className="flex justify-center py-8">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                      <p className="text-gray-600">Loading results...</p>
+                    </div>
+                  </div>
+                ) : results.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FiBarChart2 className="mx-auto text-4xl text-gray-400 mb-4" />
+                    <p className="text-gray-500">No submissions found for this quiz</p>
+                    <p className="text-sm text-gray-400 mt-2">Results will appear here when students submit the quiz</p>
+                  </div>
+                ) : (
                   <div className="overflow-x-auto">
-                    {loading.results ? (
-                      <div className="flex justify-center py-4">
-                        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-                      </div>
-                    ) : results.length === 0 ? (
-                      <p className="text-gray-500 text-center py-4">No results available</p>
-                    ) : (
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Submitted</th>
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Student Details
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Registration Number
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Department
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Score
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Percentage
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Time Spent
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Submitted At
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {results.map((result, index) => (
+                          <tr key={result.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                {result.fullName || 'Unknown'}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {result.email || 'No email'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                result.regNumber === 'Anonymous' 
+                                  ? 'bg-red-100 text-red-800' 
+                                  : 'bg-green-100 text-green-800'
+                              }`}>
+                                {result.regNumber || 'Anonymous'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {result.department || 'Unknown'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <span className="text-gray-900">{result.score}</span>
+                              <span className="text-gray-500"> / {result.total}</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="flex-1">
+                                  <div className={`h-2 rounded-full mr-2 ${
+                                    (result.percentage || 0) >= 70 ? 'bg-green-200' :
+                                    (result.percentage || 0) >= 50 ? 'bg-yellow-200' : 'bg-red-200'
+                                  }`}>
+                                    <div 
+                                      className={`h-2 rounded-full ${
+                                        (result.percentage || 0) >= 70 ? 'bg-green-500' :
+                                        (result.percentage || 0) >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                                      }`}
+                                      style={{ width: `${Math.min(result.percentage || 0, 100)}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                                <span className="text-sm font-medium text-gray-900 ml-2">
+                                  {result.percentage || 0}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {result.timeSpent ? `${Math.round(result.timeSpent / 60)} mins` : 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {result.timestamp || 'Unknown'}
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {results.map((result) => (
-                            <tr key={result.id}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {result.userEmail || 'Anonymous'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                {result.score} / {result.totalPossible}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {result.timestamp}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
