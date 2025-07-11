@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase/firebaseConfig';
 import { doc, getDoc, getDocs, collection, updateDoc } from 'firebase/firestore';
+import DashboardHeader from '../components/DashboardHeader';
 import { 
   FiShield, 
   FiUsers, 
@@ -13,7 +14,6 @@ import {
   FiDownload,
   FiRefreshCw,
   FiSettings,
-  FiLogOut,
   FiTrendingUp,
   FiClock,
   FiHeart,
@@ -369,59 +369,12 @@ export default function SuperAdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-soft sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <FiShield className="text-red-600" />
-                SuperAdmin Dashboard
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Global platform management and analytics
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-              <div className="flex items-center gap-4">
-                {/* Real-time indicator */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setRealTimeActive(!realTimeActive)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      realTimeActive 
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <div className={`w-2 h-2 rounded-full ${realTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                    {realTimeActive ? 'Live' : 'Offline'}
-                  </button>
-                  
-                  <button
-                    onClick={refreshAllData}
-                    className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 text-sm font-medium"
-                  >
-                    <FiRefreshCw size={16} />
-                    Refresh
-                  </button>
-                </div>
-              </div>
-
-              <span className="text-sm text-gray-500">
-                Updated: {lastUpdated.toLocaleTimeString()}
-              </span>
-
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium px-3 py-2 rounded-md hover:bg-red-50 transition-colors"
-              >
-                <FiLogOut /> Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <DashboardHeader 
+        user={superAdmin}
+        onLogout={handleLogout}
+        title="SuperAdmin Dashboard"
+        subtitle="Global platform management and analytics"
+      />
 
       {/* Notification */}
       <AnimatePresence>

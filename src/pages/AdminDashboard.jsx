@@ -7,8 +7,9 @@ import {
 } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import DashboardHeader from '../components/DashboardHeader';
 import { 
-  FiPlus, FiLogOut, FiList, FiTrash2, FiEdit2, 
+  FiPlus, FiList, FiTrash2, FiEdit2, 
   FiUpload, FiCodesandbox, FiClock, FiUsers, 
   FiBarChart2, FiCheck, FiX, FiSave, FiBook,
   FiDownload, FiEye, FiEyeOff
@@ -469,22 +470,12 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-gray-800">Admin Dashboard</h1>
-            <p className="text-sm text-gray-600">
-              {admin?.department} Department
-            </p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-red-600 hover:text-red-700 px-3 py-2 rounded-md hover:bg-red-50 transition-colors"
-          >
-            <FiLogOut /> Logout
-          </button>
-        </div>
-      </header>
+      <DashboardHeader 
+        user={admin}
+        onLogout={handleLogout}
+        title="Admin Dashboard"
+        subtitle={`${admin?.department} Department`}
+      />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
