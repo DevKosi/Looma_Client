@@ -46,8 +46,6 @@ import {
   HEALTH_METRICS
 } from '../utils/superAdminService';
 import { generateGlobalLeaderboard, generateDepartmentLeaderboard } from '../utils/leaderboardService';
-import { useTheme } from '../contexts/ThemeContext';
-import ThemeToggle from '../components/ThemeToggle';
 
 export default function SuperAdminDashboard() {
   const [superAdmin, setSuperAdmin] = useState(null);
@@ -84,7 +82,6 @@ export default function SuperAdminDashboard() {
   const [loadingLeaderboards, setLoadingLeaderboards] = useState(false);
 
   const navigate = useNavigate();
-  const { isDark } = useTheme();
 
   // Verify super admin access
   useEffect(() => {
@@ -370,54 +367,54 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-soft sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
+      <header className="bg-white shadow-soft sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
-                <FiShield className="text-red-600 dark:text-red-400" />
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <FiShield className="text-red-600" />
                 SuperAdmin Dashboard
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-gray-600 mt-1">
                 Global platform management and analytics
               </p>
             </div>
             
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              
-              {/* Real-time indicator */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setRealTimeActive(!realTimeActive)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    realTimeActive 
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50' 
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  <div className={`w-2 h-2 rounded-full ${realTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400 dark:bg-gray-500'}`} />
-                  {realTimeActive ? 'Live' : 'Offline'}
-                </button>
-                
-                <button
-                  onClick={refreshAllData}
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 text-sm font-medium"
-                >
-                  <FiRefreshCw size={16} />
-                  Refresh
-                </button>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+              <div className="flex items-center gap-4">
+                {/* Real-time indicator */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setRealTimeActive(!realTimeActive)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      realTimeActive 
+                        ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <div className={`w-2 h-2 rounded-full ${realTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                    {realTimeActive ? 'Live' : 'Offline'}
+                  </button>
+                  
+                  <button
+                    onClick={refreshAllData}
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 text-sm font-medium"
+                  >
+                    <FiRefreshCw size={16} />
+                    Refresh
+                  </button>
+                </div>
               </div>
 
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <span className="text-sm text-gray-500">
                 Updated: {lastUpdated.toLocaleTimeString()}
               </span>
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm font-medium"
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium px-3 py-2 rounded-md hover:bg-red-50 transition-colors"
               >
                 <FiLogOut /> Logout
               </button>
@@ -447,43 +444,45 @@ export default function SuperAdminDashboard() {
       </AnimatePresence>
 
       {/* Navigation */}
-      <nav className="bg-white dark:bg-gray-800 shadow-soft">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex overflow-x-auto">
-            {[
-              { id: 'overview', label: 'System Overview', icon: <FiMonitor /> },
-              { id: 'analytics', label: 'Analytics', icon: <FiBarChart2 /> },
-              { id: 'users', label: 'User Management', icon: <FiUsers /> },
-              { id: 'quizzes', label: 'Quiz Management', icon: <FiSettings /> },
-              { id: 'departments', label: 'Departments', icon: <FiGlobe /> },
-              { id: 'logs', label: 'Activity Logs', icon: <FiActivity /> },
-              { id: 'maintenance', label: 'Maintenance', icon: <FiDatabase /> },
-              { id: 'leaderboard', label: 'Leaderboard', icon: <FiAward /> }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap border-b-2 transition-colors ${
-                  activeTab === tab.id 
-                    ? 'text-primary-600 dark:text-primary-400 border-primary-600 dark:border-primary-400' 
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 border-transparent'
-                }`}
-              >
-                {tab.icon} {tab.label}
-              </button>
-            ))}
+      <nav className="bg-white shadow-soft">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex overflow-x-auto scrollbar-hide">
+            <div className="flex space-x-0 min-w-full">
+              {[
+                { id: 'overview', label: 'System Overview', icon: <FiMonitor /> },
+                { id: 'analytics', label: 'Analytics', icon: <FiBarChart2 /> },
+                { id: 'users', label: 'User Management', icon: <FiUsers /> },
+                { id: 'quizzes', label: 'Quiz Management', icon: <FiSettings /> },
+                { id: 'departments', label: 'Departments', icon: <FiGlobe /> },
+                { id: 'logs', label: 'Activity Logs', icon: <FiActivity /> },
+                { id: 'maintenance', label: 'Maintenance', icon: <FiDatabase /> },
+                { id: 'leaderboard', label: 'Leaderboard', icon: <FiAward /> }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap border-b-2 transition-colors flex-shrink-0 ${
+                    activeTab === tab.id 
+                      ? 'text-primary-600 border-primary-600' 
+                      : 'text-gray-500 hover:text-gray-700 border-transparent'
+                  }`}
+                >
+                  {tab.icon} {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* System Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* System Health */}
             {platformStats && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex items-center justify-between mb-6">
+              <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                   <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                     <FiHeart className="text-red-500" />
                     System Health
@@ -503,9 +502,9 @@ export default function SuperAdminDashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                   <div className="text-center">
-                    <div className={`text-4xl font-bold mb-2 ${
+                    <div className={`text-3xl sm:text-4xl font-bold mb-2 ${
                       platformStats.health.status.color === 'green' ? 'text-green-600' :
                       platformStats.health.status.color === 'blue' ? 'text-blue-600' :
                       platformStats.health.status.color === 'yellow' ? 'text-yellow-600' :
@@ -518,23 +517,23 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-blue-600 mb-2">{platformStats.users.total}</div>
+                    <div className="text-3xl sm:text-4xl font-bold text-blue-600 mb-2">{platformStats.users.total}</div>
                     <div className="text-sm text-gray-600">Total Users</div>
                   </div>
 
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-green-600 mb-2">{platformStats.quizzes.total}</div>
+                    <div className="text-3xl sm:text-4xl font-bold text-green-600 mb-2">{platformStats.quizzes.total}</div>
                     <div className="text-sm text-gray-600">Total Quizzes</div>
                   </div>
 
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-purple-600 mb-2">{platformStats.submissions.total}</div>
+                    <div className="text-3xl sm:text-4xl font-bold text-purple-600 mb-2">{platformStats.submissions.total}</div>
                     <div className="text-sm text-gray-600">Total Submissions</div>
                   </div>
                 </div>
 
                 {/* Health Factors */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {Object.entries(platformStats.health.factors).map(([factor, score]) => (
                     <div key={factor} className="bg-gray-50 rounded-lg p-4">
                       <div className="flex justify-between items-center mb-2">
@@ -561,7 +560,7 @@ export default function SuperAdminDashboard() {
             )}
 
             {/* Recent Alerts */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                 <FiAlertTriangle className="text-yellow-500" />
                 System Alerts ({systemAlerts.length})
@@ -574,8 +573,8 @@ export default function SuperAdminDashboard() {
                       alert.severity === 'medium' ? 'bg-yellow-50 border-yellow-500' :
                       'bg-blue-50 border-blue-500'
                     }`}>
-                      <div className="flex justify-between items-start">
-                        <div>
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                        <div className="flex-1">
                           <div className="font-medium text-gray-900 flex items-center gap-2">
                             <span>{alert.icon}</span>
                             {alert.title}
@@ -597,7 +596,7 @@ export default function SuperAdminDashboard() {
 
             {/* Quick Stats Grid */}
             {platformStats && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="bg-white rounded-lg shadow-sm p-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">User Distribution</h3>
                   <div className="space-y-3">

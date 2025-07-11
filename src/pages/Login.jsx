@@ -5,8 +5,6 @@ import { doc, getDoc } from "firebase/firestore";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FiMail, FiLock, FiArrowRight, FiAlertCircle, FiCheckCircle, FiEye, FiEyeOff } from "react-icons/fi";
-import { useTheme } from "../contexts/ThemeContext";
-import ThemeToggle from "../components/ThemeToggle";
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -20,7 +18,6 @@ export default function Login() {
   const [validationErrors, setValidationErrors] = useState({});
 
   const navigate = useNavigate();
-  const { isDark } = useTheme();
 
   const validateForm = () => {
     const errors = {};
@@ -180,13 +177,8 @@ export default function Login() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4"
+      className="min-h-screen bg-gray-50 flex items-center justify-center p-4"
     >
-      {/* Theme Toggle - Top Right */}
-      <div className="absolute top-4 right-4 z-10">
-        <ThemeToggle />
-      </div>
-
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

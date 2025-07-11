@@ -5,8 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { runTransaction, serverTimestamp } from 'firebase/firestore';
 import { getUserPosition, calculateUserStats } from '../utils/leaderboardService';
-import { useTheme } from '../contexts/ThemeContext';
-import ThemeToggle from '../components/ThemeToggle';
 
 import { 
   FiLogOut, FiBook, FiAward, FiUser, 
@@ -39,7 +37,6 @@ export default function StudentDashboard() {
   const [modalError, setModalError] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState(null);
   const navigate = useNavigate();
-  const { isDark } = useTheme();
 
   // Fetch user data and quizzes
   useEffect(() => {
@@ -248,28 +245,27 @@ const verifyAccessCode = async () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative">
+      return (
+      <div className="min-h-screen bg-gray-50 relative">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-soft sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <header className="bg-white shadow-soft sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-              <FiBook className="text-blue-600 dark:text-blue-400" size={20} />
+            <div className="p-2 bg-blue-100 rounded-full">
+              <FiBook className="text-blue-600" size={20} />
             </div>
             <div>
-              <h1 className="font-bold text-gray-800 dark:text-gray-200">Student Dashboard</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <h1 className="font-bold text-gray-800">Student Dashboard</h1>
+              <p className="text-sm text-gray-600">
                 {user?.department} • {user?.regNumber}
               </p>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            <ThemeToggle />
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm font-medium"
+              className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium px-3 py-2 rounded-md hover:bg-red-50 transition-colors"
             >
               <FiLogOut /> Sign Out
             </button>
@@ -278,47 +274,49 @@ const verifyAccessCode = async () => {
       </header>
 
       {/* Navigation */}
-      <nav className="bg-white dark:bg-gray-800 shadow-soft">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('quizzes')}
-              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'quizzes' ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              <FiBook size={16} /> Available Quizzes
-            </button>
-            <button
-              onClick={() => setActiveTab('results')}
-              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'results' ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              <FiBarChart2 size={16} /> My Results
-            </button>
-            <button
-              onClick={() => setActiveTab('leaderboard')}
-              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'leaderboard' ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              <FiAward size={16} /> Leaderboard
-            </button>
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'profile' ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              <FiUser size={16} /> My Profile
-            </button>
+      <nav className="bg-white shadow-soft">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex overflow-x-auto scrollbar-hide">
+            <div className="flex space-x-0 min-w-full">
+              <button
+                onClick={() => setActiveTab('quizzes')}
+                className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'quizzes' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <FiBook size={16} /> Available Quizzes
+              </button>
+              <button
+                onClick={() => setActiveTab('results')}
+                className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'results' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <FiBarChart2 size={16} /> My Results
+              </button>
+              <button
+                onClick={() => setActiveTab('leaderboard')}
+                className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'leaderboard' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <FiAward size={16} /> Leaderboard
+              </button>
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'profile' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <FiUser size={16} /> My Profile
+              </button>
+            </div>
           </div>
         </div>
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Notification */}
         <AnimatePresence>
           {notification && (
@@ -340,7 +338,7 @@ const verifyAccessCode = async () => {
         {activeTab === 'quizzes' && (
           <>
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="relative flex-1">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FiSearch className="text-gray-400" />
@@ -357,7 +355,7 @@ const verifyAccessCode = async () => {
               <div className="relative">
                 <button
                   onClick={() => setShowDepartments(!showDepartments)}
-                  className="flex items-center justify-between gap-2 px-4 py-2 w-full md:w-64 border border-gray-300 rounded-lg bg-white"
+                  className="flex items-center justify-between gap-2 px-4 py-2 w-full sm:w-64 border border-gray-300 rounded-lg bg-white"
                 >
                   <span>
                     {departmentFilter === 'all' ? 'All Departments' : departmentFilter}
@@ -366,7 +364,7 @@ const verifyAccessCode = async () => {
                 </button>
 
                 {showDepartments && (
-                  <div className="absolute z-10 mt-1 w-full md:w-64 bg-white border border-gray-300 rounded-lg shadow-lg">
+                  <div className="absolute z-10 mt-1 w-full sm:w-64 bg-white border border-gray-300 rounded-lg shadow-lg">
                     <button
                       onClick={() => {
                         setDepartmentFilter('all');
@@ -399,7 +397,7 @@ const verifyAccessCode = async () => {
 
             {/* Quizzes Grid */}
             {loading.quizzes ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="bg-white rounded-lg shadow-sm p-6 h-48 animate-pulse"></div>
                 ))}
@@ -419,7 +417,7 @@ const verifyAccessCode = async () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredQuizzes.map((quiz) => (
                   <motion.div
                     key={quiz.id}
