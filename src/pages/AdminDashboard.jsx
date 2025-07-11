@@ -13,6 +13,7 @@ import {
   FiBarChart2, FiCheck, FiX, FiSave, FiBook,
   FiDownload, FiEye, FiEyeOff
 } from 'react-icons/fi';
+import { debugQuizSubmissions } from '../utils/debugHelpers';
 import { CSVLink } from 'react-csv';
 
 const AdminDashboard = () => {
@@ -139,24 +140,44 @@ const AdminDashboard = () => {
     try {
       const submissionsRef = collection(db, 'quizzes', quizId, 'submissions');
       const snapshot = await getDocs(submissionsRef);
-      const resultsData = snapshot.docs.map(doc => {
+      
+      console.log(`📊 FOUND ${snapshot.size} SUBMISSIONS FOR QUIZ ${quizId}`);
+      
+      const resultsData = snapshot.docs.map((doc, index) => {
         const data = doc.data();
-        console.log('Raw submission data:', data);
+        console.log(`Raw submission data ${index + 1}:`, data);
         
-        return {
+        // Enhanced data processing with validation
+        const processedData = {
           id: doc.id,
           ...data,
           timestamp: data.submittedAt?.toDate ? data.submittedAt.toDate().toLocaleString() : 'Unknown',
-          percentage: data.percentage || 0,
-          timeSpent: data.timeSpent || 0,
+          percentage: typeof data.percentage === 'number' ? data.percentage : 0,
+          timeSpent: typeof data.timeSpent === 'number' ? data.timeSpent : 0,
           email: data.email || 'No email',
           regNumber: data.regNumber || 'Anonymous',
           fullName: data.fullName || 'Unknown',
           department: data.department || 'Unknown'
         };
+
+        // Log data quality issues
+        if (processedData.regNumber === 'Anonymous') {
+          console.warn(`⚠️ Anonymous regNumber in submission ${index + 1}`);
+        }
+        if (processedData.percentage === 0 && data.score > 0) {
+          console.warn(`⚠️ Zero percentage despite score > 0 in submission ${index + 1}`);
+        }
+        if (processedData.email === 'No email') {
+          console.warn(`⚠️ Missing email in submission ${index + 1}`);
+        }
+
+        return processedData;
       });
       
       console.log('Processed results data:', resultsData);
+      
+      // Run additional debug check
+      debugQuizSubmissions(quizId);
       setResults(resultsData);
     } catch (error) {
       console.error('Error fetching results:', error);

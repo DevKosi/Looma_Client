@@ -3,6 +3,7 @@ import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/fires
 import { db, auth } from '../firebase/firebaseConfig';
 import React, { useEffect, useState } from 'react';
 import { FiArrowLeft, FiArrowRight, FiCheck, FiClock, FiAlertTriangle } from 'react-icons/fi';
+import { validateSubmissionData, testCalculations } from '../utils/debugHelpers';
 
 export default function QuizPage() {
   const { id } = useParams();
@@ -155,6 +156,9 @@ export default function QuizPage() {
       const percentage = totalQuestions > 0 ? Math.round((correct / totalQuestions) * 100) : 0;
       const timeSpentInSeconds = Math.max(0, (quiz.timeLimit * 60) - (timeLeft || 0));
       
+      // Debug calculation process
+      const calcResults = testCalculations(correct, totalQuestions, quiz.timeLimit, timeLeft);
+      
       const submissionData = {
         userId: currentUser.uid,
         regNumber: userData.regNumber,
@@ -173,6 +177,9 @@ export default function QuizPage() {
 
       console.log('Submitting data:', submissionData);
       console.log('Calculated values - Score:', correct, 'Total:', totalQuestions, 'Percentage:', percentage, 'Time Spent:', timeSpentInSeconds);
+      
+      // Validate submission data before sending
+      const validation = validateSubmissionData(submissionData);
       
       const docRef = await addDoc(collection(db, 'quizzes', id, 'submissions'), submissionData);
       console.log('Submission successful with ID:', docRef.id);
