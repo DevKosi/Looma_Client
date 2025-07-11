@@ -139,7 +139,7 @@ export default function QuizPage() {
 
       const userData = userDoc.data();
       console.log('User data retrieved:', userData);
-
+      cursor/analyze-project-issues-and-data-flow-1ba1
       if (!userData.regNumber) {
         throw new Error('Registration number not found in profile. Please update your profile.');
       }
@@ -150,6 +150,17 @@ export default function QuizPage() {
         fullName: userData.fullName || 'Unknown',
         department: userData.department || 'Unknown',
         email: userData.email || currentUser.email,
+
+      // Fetch user data from Firestore to get registration number
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      const userData = userDoc.data();
+
+      await addDoc(collection(db, 'quizzes', id, 'submissions'), {
+        userId: currentUser.uid,
+        regNumber: userData?.regNumber || 'Anonymous',
+        fullName: userData?.fullName || 'Unknown',
+        department: userData?.department || 'Unknown',
+        main
         score: correct,
         total: quiz.questions.length,
         percentage: Math.round((correct / quiz.questions.length) * 100),
