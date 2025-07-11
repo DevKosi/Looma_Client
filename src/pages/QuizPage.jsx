@@ -3,6 +3,7 @@ import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/fires
 import { db, auth } from '../firebase/firebaseConfig';
 import React, { useEffect, useState } from 'react';
 import { FiArrowLeft, FiArrowRight, FiCheck, FiClock, FiAlertTriangle } from 'react-icons/fi';
+import { validateSubmissionData, testCalculations } from '../utils/debugHelpers';
 
 export default function QuizPage() {
   const { id } = useParams();
@@ -131,6 +132,12 @@ export default function QuizPage() {
 
       // Fetch user data from Firestore to get registration number
       console.log('Fetching user data for:', currentUser.uid);
+      console.log('Current user auth data:', {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName
+      });
+      
       const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
       
       if (!userDoc.exists()) {
@@ -138,42 +145,44 @@ export default function QuizPage() {
       }
 
       const userData = userDoc.data();
-      console.log('User data retrieved:', userData);
-      cursor/analyze-project-issues-and-data-flow-1ba1
-      if (!userData.regNumber) {
+      console.log('User data retrieved from Firestore:', userData);
+
+      if (!userData || !userData.regNumber) {
         throw new Error('Registration number not found in profile. Please update your profile.');
       }
 
+      // Calculate percentage and time spent
+      const totalQuestions = quiz.questions.length;
+      const percentage = totalQuestions > 0 ? Math.round((correct / totalQuestions) * 100) : 0;
+      const timeSpentInSeconds = Math.max(0, (quiz.timeLimit * 60) - (timeLeft || 0));
+      
+      // Debug calculation process
+      const calcResults = testCalculations(correct, totalQuestions, quiz.timeLimit, timeLeft);
+      
       const submissionData = {
         userId: currentUser.uid,
         regNumber: userData.regNumber,
         fullName: userData.fullName || 'Unknown',
         department: userData.department || 'Unknown',
-        email: userData.email || currentUser.email,
-
-      // Fetch user data from Firestore to get registration number
-      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      const userData = userDoc.data();
-
-      await addDoc(collection(db, 'quizzes', id, 'submissions'), {
-        userId: currentUser.uid,
-        regNumber: userData?.regNumber || 'Anonymous',
-        fullName: userData?.fullName || 'Unknown',
-        department: userData?.department || 'Unknown',
-        main
+        email: userData.email || currentUser.email || 'No email provided',
         score: correct,
-        total: quiz.questions.length,
-        percentage: Math.round((correct / quiz.questions.length) * 100),
+        total: totalQuestions,
+        percentage: percentage,
         accessCode: accessCode || 'direct',
         submittedAt: serverTimestamp(),
         answers,
         quizTitle: quiz.title,
-        timeSpent: (quiz.timeLimit * 60) - timeLeft,
+        timeSpent: timeSpentInSeconds,
       };
 
       console.log('Submitting data:', submissionData);
-      await addDoc(collection(db, 'quizzes', id, 'submissions'), submissionData);
-      console.log('Submission successful');
+      console.log('Calculated values - Score:', correct, 'Total:', totalQuestions, 'Percentage:', percentage, 'Time Spent:', timeSpentInSeconds);
+      
+      // Validate submission data before sending
+      const validation = validateSubmissionData(submissionData);
+      
+      const docRef = await addDoc(collection(db, 'quizzes', id, 'submissions'), submissionData);
+      console.log('Submission successful with ID:', docRef.id);
       
     } catch (err) {
       console.error('Submission error:', err);
