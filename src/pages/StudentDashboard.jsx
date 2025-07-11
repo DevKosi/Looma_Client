@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { runTransaction, serverTimestamp } from 'firebase/firestore';
 import { getUserPosition, calculateUserStats } from '../utils/leaderboardService';
+import { useTheme } from '../contexts/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 import { 
   FiLogOut, FiBook, FiAward, FiUser, 
@@ -37,6 +39,7 @@ export default function StudentDashboard() {
   const [modalError, setModalError] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState(null);
   const navigate = useNavigate();
+  const { isDark } = useTheme();
 
   // Fetch user data and quizzes
   useEffect(() => {
@@ -246,26 +249,27 @@ const verifyAccessCode = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] relative">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+      <header className="bg-white dark:bg-gray-800 shadow-soft sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="p-2 bg-blue-100 rounded-full">
-              <FiBook className="text-blue-600" size={20} />
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+              <FiBook className="text-blue-600 dark:text-blue-400" size={20} />
             </div>
             <div>
-              <h1 className="font-bold text-gray-800">Student Dashboard</h1>
-              <p className="text-sm text-gray-600">
+              <h1 className="font-bold text-gray-800 dark:text-gray-200">Student Dashboard</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 {user?.department} • {user?.regNumber}
               </p>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium"
+              className="flex items-center gap-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm font-medium"
             >
               <FiLogOut /> Sign Out
             </button>
@@ -274,13 +278,13 @@ const verifyAccessCode = async () => {
       </header>
 
       {/* Navigation */}
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-white dark:bg-gray-800 shadow-soft">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex overflow-x-auto">
             <button
               onClick={() => setActiveTab('quizzes')}
               className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'quizzes' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+                activeTab === 'quizzes' ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <FiBook size={16} /> Available Quizzes
@@ -288,7 +292,7 @@ const verifyAccessCode = async () => {
             <button
               onClick={() => setActiveTab('results')}
               className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'results' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+                activeTab === 'results' ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <FiBarChart2 size={16} /> My Results
@@ -296,7 +300,7 @@ const verifyAccessCode = async () => {
             <button
               onClick={() => setActiveTab('leaderboard')}
               className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'leaderboard' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+                activeTab === 'leaderboard' ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <FiAward size={16} /> Leaderboard
@@ -304,7 +308,7 @@ const verifyAccessCode = async () => {
             <button
               onClick={() => setActiveTab('profile')}
               className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'profile' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+                activeTab === 'profile' ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <FiUser size={16} /> My Profile
@@ -672,15 +676,23 @@ const verifyAccessCode = async () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
-                  <h4 className="font-semibold text-gray-800 mb-2">Department Ranking</h4>
-                  <p className="text-2xl font-bold text-yellow-600">Not Available</p>
-                  <p className="text-sm text-gray-600">Take quizzes to see your position</p>
+                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                  <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Department Ranking</h4>
+                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                    {userPosition?.department?.hasData ? 'Loading...' : 'No Data'}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {userPosition?.department?.hasData ? 'Calculating your position...' : 'Take quizzes to see your position'}
+                  </p>
                 </div>
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                  <h4 className="font-semibold text-gray-800 mb-2">Global Ranking</h4>
-                  <p className="text-2xl font-bold text-blue-600">Not Available</p>
-                  <p className="text-sm text-gray-600">Take quizzes to see your position</p>
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Global Ranking</h4>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {userPosition?.global?.hasData ? 'Loading...' : 'No Data'}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {userPosition?.global?.hasData ? 'Calculating your position...' : 'Take quizzes to see your position'}
+                  </p>
                 </div>
               </div>
             )}

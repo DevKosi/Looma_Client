@@ -2,14 +2,29 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebaseConfig';
 import React, { useEffect, useState } from 'react';
-import { FiArrowLeft, FiArrowRight, FiCheck, FiClock, FiAlertTriangle } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FiArrowLeft, 
+  FiArrowRight, 
+  FiCheck, 
+  FiClock, 
+  FiAlertTriangle, 
+  FiPlay,
+  FiPause,
+  FiFlag,
+  FiCheckCircle,
+  FiXCircle
+} from 'react-icons/fi';
 import { validateSubmissionData, testCalculations } from '../utils/debugHelpers';
+import { useTheme } from '../contexts/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function QuizPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const accessCode = new URLSearchParams(location.search).get('code');
+  const { isDark } = useTheme();
 
   const [quiz, setQuiz] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -20,6 +35,8 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submissionError, setSubmissionError] = useState(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
 
   // Shuffle function to randomize questions
   const shuffleArray = (array) => {
@@ -78,7 +95,7 @@ export default function QuizPage() {
   }, [id, navigate]);
 
   useEffect(() => {
-    if (!timeLeft || submitted) return;
+    if (!timeLeft || submitted || isPaused) return;
     const interval = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -90,7 +107,13 @@ export default function QuizPage() {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [timeLeft, submitted]);
+  }, [timeLeft, submitted, isPaused]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleSelect = (questionId, optionId) => {
     setAnswers(prev => ({ ...prev, [questionId]: optionId }));
@@ -193,10 +216,11 @@ export default function QuizPage() {
 
   if (loading) {
     return (
-      <div className="h-screen flex justify-center items-center bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center items-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading quiz...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-500 border-t-transparent mx-auto mb-6"></div>
+          <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Loading Quiz</h2>
+          <p className="text-gray-500 dark:text-gray-400">Please wait while we prepare your assessment...</p>
         </div>
       </div>
     );
@@ -204,170 +228,327 @@ export default function QuizPage() {
 
   if (error) {
     return (
-      <div className="h-screen flex justify-center items-center bg-gray-50 p-6">
-        <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md w-full">
-          <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-            <FiAlertTriangle className="text-red-600 text-2xl" />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center items-center p-4">
+        <div className="text-center max-w-md">
+          <div className="bg-red-100 dark:bg-red-900/20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <FiAlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Quiz Error</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <p className="text-sm text-gray-500 mb-4">Redirecting to dashboard...</p>
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Error Loading Quiz</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
           <button
             onClick={() => navigate('/student-dashboard')}
-            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg"
+            className="btn-primary"
           >
-            Go to Dashboard
+            Return to Dashboard
           </button>
         </div>
       </div>
     );
   }
 
-  if (submitted && !submissionError) {
+  if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-        <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md w-full">
-          <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-            <FiCheck className="text-green-600 text-2xl" />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center items-center p-4">
+        <div className="text-center max-w-md">
+          <div className="bg-green-100 dark:bg-green-900/20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <FiCheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Quiz Completed!</h1>
-          <p className="text-gray-600 mt-2 mb-2">
-            You scored <span className="text-blue-600 font-bold">{score}</span> out of{' '}
-            <span className="font-semibold">{quiz.questions.length}</span>
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Quiz Submitted!</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Your score: <span className="font-semibold text-primary-600 dark:text-primary-400">{score}/{quiz.questions.length}</span>
           </p>
-          <p className="text-gray-500 text-sm mb-6">
-            Percentage: <span className="font-semibold">{Math.round((score / quiz.questions.length) * 100)}%</span>
-          </p>
+          {submissionError && (
+            <div className="status-error p-3 rounded-lg mb-4 text-sm">
+              <FiAlertTriangle className="inline mr-2" />
+              {submissionError}
+            </div>
+          )}
           <button
             onClick={() => navigate('/student-dashboard')}
-            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg"
+            className="btn-primary"
           >
-            Back to Dashboard
+            Return to Dashboard
           </button>
         </div>
       </div>
     );
   }
 
-  const question = quiz.questions[currentQuestion];
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  const timeColor = timeLeft <= 60 ? 'text-red-600 animate-pulse' : 'text-gray-800';
-  const defaultBooleanOptions = [
-    { id: 'true', text: 'True', correct: true },
-    { id: 'false', text: 'False', correct: false }
-  ];
-  const displayedOptions = question.options?.length
-    ? question.options
-    : question.type === 'boolean'
-      ? defaultBooleanOptions
-      : [];
+  const currentQ = quiz.questions[currentQuestion];
+  const answeredQuestions = Object.keys(answers).length;
+  const progress = (answeredQuestions / quiz.questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b">
-          <div>
-            <h1 className="text-xl font-bold text-gray-800">{quiz.title}</h1>
-            <p className="text-gray-600">{quiz.description}</p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 shadow-soft border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Back Button */}
+            <button
+              onClick={() => navigate('/student-dashboard')}
+              className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+            >
+              <FiArrowLeft className="w-5 h-5 mr-2" />
+              Back to Dashboard
+            </button>
+
+            {/* Quiz Title */}
+            <div className="text-center flex-1">
+              <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-200 truncate">
+                {quiz.title}
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Question {currentQuestion + 1} of {quiz.questions.length}
+              </p>
+            </div>
+
+            {/* Theme Toggle */}
+            <div className="flex items-center space-x-4">
+              <ThemeToggle />
+            </div>
           </div>
-          <div className={`flex items-center bg-gray-100 px-4 py-2 rounded-lg ${timeColor}`}>
-            <FiClock className="mr-2" />
-            <span className="font-mono">
-              {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Progress: {answeredQuestions}/{quiz.questions.length} answered
+            </span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {Math.round(progress)}% complete
             </span>
           </div>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div 
+              className="bg-primary-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
         </div>
+      </div>
 
-        {/* Navigation boxes */}
-        <div className="p-4 border-b flex flex-wrap gap-2">
-          {quiz.questions.map((q, index) => (
+      {/* Timer */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <FiClock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                <span className="text-lg font-mono font-semibold text-gray-800 dark:text-gray-200">
+                  {formatTime(timeLeft)}
+                </span>
+              </div>
+              <button
+                onClick={() => setIsPaused(!isPaused)}
+                className="flex items-center space-x-2 px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                {isPaused ? (
+                  <>
+                    <FiPlay className="w-4 h-4" />
+                    <span className="text-sm">Resume</span>
+                  </>
+                ) : (
+                  <>
+                    <FiPause className="w-4 h-4" />
+                    <span className="text-sm">Pause</span>
+                  </>
+                )}
+              </button>
+            </div>
+
             <button
-              key={q.id}
-              onClick={() => setCurrentQuestion(index)}
-              className={`w-9 h-9 rounded-full flex items-center justify-center text-sm ${currentQuestion === index
-                  ? 'bg-blue-600 text-white'
-                  : answers[q.id]
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-200 text-gray-700'
-                }`}
+              onClick={() => setShowConfirmSubmit(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors"
             >
-              {index + 1}
+              <FiFlag className="w-4 h-4" />
+              <span>Submit Quiz</span>
             </button>
-          ))}
+          </div>
         </div>
+      </div>
 
-        {/* Submission error display */}
-        {submissionError && (
-          <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center">
-              <FiAlertTriangle className="text-red-600 mr-2" />
-              <div>
-                <p className="text-red-800 font-medium">Submission Failed</p>
-                <p className="text-red-600 text-sm">{submissionError}</p>
-                <button
-                  onClick={() => setSubmissionError(null)}
-                  className="mt-2 text-red-600 hover:text-red-800 text-sm underline"
-                >
-                  Try submitting again
-                </button>
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="card p-6 sm:p-8">
+          {/* Question */}
+          <div className="mb-8">
+            <div className="flex items-start space-x-3 mb-6">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full flex items-center justify-center font-semibold text-sm">
+                {currentQuestion + 1}
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 leading-relaxed">
+                  {currentQ.question}
+                </h2>
+                
+                {/* Options */}
+                <div className="space-y-3">
+                  {currentQ.options ? (
+                    currentQ.options.map((option, index) => (
+                      <motion.button
+                        key={option.id}
+                        onClick={() => handleSelect(currentQ.id, option.id)}
+                        className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+                          answers[currentQ.id] === option.id
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                            : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                        }`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            answers[currentQ.id] === option.id
+                              ? 'border-primary-500 bg-primary-500'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {answers[currentQ.id] === option.id && (
+                              <FiCheck className="w-3 h-3 text-white" />
+                            )}
+                          </div>
+                          <span className="font-medium">{option.text}</span>
+                        </div>
+                      </motion.button>
+                    ))
+                  ) : (
+                    // True/False question
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        { id: 'true', text: 'True' },
+                        { id: 'false', text: 'False' }
+                      ].map((option) => (
+                        <motion.button
+                          key={option.id}
+                          onClick={() => handleSelect(currentQ.id, option.id)}
+                          className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                            answers[currentQ.id] === option.id
+                              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                          }`}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <div className="flex items-center justify-center space-x-2">
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              answers[currentQ.id] === option.id
+                                ? 'border-primary-500 bg-primary-500'
+                                : 'border-gray-300 dark:border-gray-500'
+                            }`}>
+                              {answers[currentQ.id] === option.id && (
+                                <FiCheck className="w-3 h-3 text-white" />
+                              )}
+                            </div>
+                            <span className="font-medium">{option.text}</span>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        )}
 
-        {/* Question area */}
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">{question.text}</h2>
-          <div className="space-y-3">
-            {displayedOptions.map((opt) => (
-              <button
-                key={opt.id}
-                onClick={() => handleSelect(question.id, opt.id)}
-                className={`w-full text-left p-4 rounded-lg border transition-all ${answers[question.id] === opt.id
-                    ? 'border-blue-500 bg-blue-50 shadow-inner'
-                    : 'border-gray-200 hover:bg-gray-100'
-                  }`}
-              >
-                {opt.text}
-              </button>
-            ))}
-          </div>
-
-          {/* Navigation buttons */}
-          <div className="flex justify-between mt-8">
+          {/* Navigation */}
+          <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-600">
             <button
-              disabled={currentQuestion === 0}
               onClick={handlePrevQuestion}
-              className={`flex items-center px-4 py-2 rounded-lg ${currentQuestion === 0
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+              disabled={currentQuestion === 0}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                currentQuestion === 0
+                  ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
             >
-              <FiArrowLeft className="mr-2" />
-              Prev
+              <FiArrowLeft className="w-4 h-4" />
+              <span>Previous</span>
             </button>
 
-            {currentQuestion < quiz.questions.length - 1 ? (
-              <button
-                onClick={handleNextQuestion}
-                className="flex items-center px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Next
-                <FiArrowRight className="ml-2" />
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                Submit Quiz
-              </button>
-            )}
+            <div className="flex items-center space-x-2">
+              {quiz.questions.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentQuestion(index)}
+                  className={`w-3 h-3 rounded-full transition-colors ${
+                    index === currentQuestion
+                      ? 'bg-primary-500'
+                      : answers[quiz.questions[index].id]
+                        ? 'bg-green-500'
+                        : 'bg-gray-300 dark:bg-gray-600'
+                  }`}
+                  aria-label={`Go to question ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={handleNextQuestion}
+              disabled={currentQuestion === quiz.questions.length - 1}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                currentQuestion === quiz.questions.length - 1
+                  ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span>Next</span>
+              <FiArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Confirm Submit Modal */}
+      <AnimatePresence>
+        {showConfirmSubmit && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full"
+            >
+              <div className="text-center">
+                <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FiAlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                  Submit Quiz?
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  You have answered {answeredQuestions} out of {quiz.questions.length} questions. 
+                  Are you sure you want to submit your quiz?
+                </p>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowConfirmSubmit(false)}
+                    className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowConfirmSubmit(false);
+                      handleSubmit();
+                    }}
+                    className="flex-1 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Submit Quiz
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
