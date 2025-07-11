@@ -177,18 +177,21 @@ export default function Login() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-gray-50 flex items-center justify-center p-4"
+      className="min-h-screen bg-gradient-to-br from-primary-50 via-accent1-50 to-accent2-50 flex items-center justify-center p-4"
     >
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="card w-full max-w-md mx-auto"
+        className="card w-full max-w-md mx-auto shadow-2xl"
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-center rounded-t-xl">
-          <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-          <p className="text-primary-100 mt-1">Sign in to your account</p>
+        <div className="bg-gradient-to-r from-primary-500 via-accent1-500 to-accent2-500 p-8 text-center rounded-t-xl relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 to-accent1-600/20"></div>
+          <div className="relative z-10">
+            <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+            <p className="text-white/90 text-lg">Sign in to your account</p>
+          </div>
         </div>
 
         {/* Messages */}
@@ -218,9 +221,9 @@ export default function Login() {
         {/* Form */}
         <form onSubmit={handleLogin} className="p-6 space-y-4">
           {/* Email */}
-          <div className="space-y-1">
-            <label className="text-gray-700 dark:text-gray-300 text-sm font-medium flex items-center">
-              <FiMail className="mr-2" /> Email Address
+          <div className="space-y-2">
+            <label className="text-gray-700 text-sm font-semibold flex items-center">
+              <FiMail className="mr-2 text-primary-500" /> Email Address
             </label>
             <input
               type="email"
@@ -228,21 +231,21 @@ export default function Login() {
               value={formData.email}
               onChange={handleChange}
               required
-              className={`input-field ${validationErrors.email ? 'border-error-500 focus:ring-error-500' : ''}`}
+              className={`input-field border-2 ${validationErrors.email ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20' : 'border-gray-200 focus:border-primary-500 focus:ring-primary-500/20'}`}
               placeholder="your@email.com"
               aria-describedby={validationErrors.email ? "email-error" : undefined}
             />
             {validationErrors.email && (
-              <p id="email-error" className="text-error-600 dark:text-error-400 text-xs mt-1">
+              <p id="email-error" className="text-error-600 text-xs mt-1 font-medium">
                 {validationErrors.email}
               </p>
             )}
           </div>
 
           {/* Password */}
-          <div className="space-y-1">
-            <label className="text-gray-700 dark:text-gray-300 text-sm font-medium flex items-center">
-              <FiLock className="mr-2" /> Password
+          <div className="space-y-2">
+            <label className="text-gray-700 text-sm font-semibold flex items-center">
+              <FiLock className="mr-2 text-primary-500" /> Password
             </label>
             <div className="relative">
               <input
@@ -251,21 +254,21 @@ export default function Login() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className={`input-field pr-10 ${validationErrors.password ? 'border-error-500 focus:ring-error-500' : ''}`}
+                className={`input-field border-2 pr-10 ${validationErrors.password ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20' : 'border-gray-200 focus:border-primary-500 focus:ring-primary-500/20'}`}
                 placeholder="Enter your password"
                 aria-describedby={validationErrors.password ? "password-error" : undefined}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary-600 transition-colors"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
               </button>
             </div>
             {validationErrors.password && (
-              <p id="password-error" className="text-error-600 dark:text-error-400 text-xs mt-1">
+              <p id="password-error" className="text-error-600 text-xs mt-1 font-medium">
                 {validationErrors.password}
               </p>
             )}
@@ -277,10 +280,10 @@ export default function Login() {
             disabled={loading}
             whileHover={{ scale: loading ? 1 : 1.02 }}
             whileTap={{ scale: loading ? 1 : 0.98 }}
-            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${
+            className={`w-full py-4 px-6 rounded-xl font-bold text-white transition-all duration-200 shadow-lg ${
               loading 
-                ? 'bg-primary-400 cursor-not-allowed' 
-                : 'bg-primary-500 hover:bg-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2'
+                ? 'bg-primary-400 cursor-not-allowed shadow-md' 
+                : 'bg-gradient-to-r from-primary-500 to-accent1-500 hover:from-primary-600 hover:to-accent1-600 hover:shadow-xl focus:ring-2 focus:ring-primary-500 focus:ring-offset-2'
             } flex items-center justify-center`}
           >
             {loading ? (
@@ -304,16 +307,16 @@ export default function Login() {
           <button
             onClick={handleForgotPassword}
             disabled={loading}
-            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm font-medium transition-colors disabled:opacity-50"
+            className="text-primary-600 hover:text-primary-700 text-sm font-semibold transition-colors disabled:opacity-50 hover:underline"
           >
             Forgot password?
           </button>
 
-          <div className="text-gray-600 dark:text-gray-400 text-sm">
+          <div className="text-gray-600 text-sm">
             Don't have an account?{" "}
             <Link
               to="/register"
-              className="text-primary-600 dark:text-primary-400 hover:underline font-medium"
+              className="text-primary-600 hover:text-primary-700 font-semibold hover:underline transition-colors"
             >
               Sign up
             </Link>

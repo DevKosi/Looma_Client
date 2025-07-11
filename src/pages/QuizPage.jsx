@@ -213,11 +213,11 @@ export default function QuizPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-accent1-50 to-accent2-50 flex justify-center items-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-500 border-t-transparent mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading Quiz</h2>
-          <p className="text-gray-500">Please wait while we prepare your assessment...</p>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Quiz</h2>
+          <p className="text-gray-600">Please wait while we prepare your assessment...</p>
         </div>
       </div>
     );
@@ -225,13 +225,13 @@ export default function QuizPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-error-50 to-red-50 flex justify-center items-center p-4">
         <div className="text-center max-w-md">
-          <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-            <FiAlertTriangle className="w-8 h-8 text-red-600" />
+          <div className="bg-error-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <FiAlertTriangle className="w-8 h-8 text-error-600" />
           </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Quiz</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-gray-700 mb-6">{error}</p>
           <button
             onClick={() => navigate('/student-dashboard')}
             className="btn-primary"
@@ -245,13 +245,13 @@ export default function QuizPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-accent2-50 to-green-50 flex justify-center items-center p-4">
         <div className="text-center max-w-md">
-          <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-            <FiCheckCircle className="w-8 h-8 text-green-600" />
+          <div className="bg-accent2-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <FiCheckCircle className="w-8 h-8 text-accent2-600" />
           </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Quiz Submitted!</h2>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-700 mb-4">
             Your score: <span className="font-semibold text-primary-600">{score}/{quiz.questions.length}</span>
           </p>
           {submissionError && (
@@ -276,15 +276,15 @@ export default function QuizPage() {
   const progress = (answeredQuestions / quiz.questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-accent1-50 to-accent2-50">
       {/* Header */}
-      <div className="bg-white shadow-soft border-b border-gray-200">
+      <div className="bg-white shadow-soft border-b border-primary-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Back Button */}
             <button
               onClick={() => navigate('/student-dashboard')}
-              className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+              className="flex items-center text-primary-600 hover:text-primary-700 hover:bg-primary-50 px-3 py-2 rounded-lg transition-all duration-200"
             >
               <FiArrowLeft className="w-5 h-5 mr-2" />
               Back to Dashboard
@@ -295,7 +295,7 @@ export default function QuizPage() {
               <h1 className="text-lg font-semibold text-gray-800 truncate">
                 {quiz.title}
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-primary-600 font-medium">
                 Question {currentQuestion + 1} of {quiz.questions.length}
               </p>
             </div>
@@ -304,19 +304,19 @@ export default function QuizPage() {
       </div>
 
       {/* Progress Bar */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-primary-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-primary-700">
               Progress: {answeredQuestions}/{quiz.questions.length} answered
             </span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-primary-600 font-medium">
               {Math.round(progress)}% complete
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-primary-100 rounded-full h-3">
             <div 
-              className="bg-primary-500 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-primary-500 to-accent1-500 h-3 rounded-full transition-all duration-500 shadow-sm"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
@@ -324,29 +324,29 @@ export default function QuizPage() {
       </div>
 
       {/* Timer */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-primary-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <FiClock className="w-5 h-5 text-gray-500" />
-                <span className="text-lg font-mono font-semibold text-gray-800">
+                <FiClock className="w-5 h-5 text-accent1-500" />
+                <span className="text-lg font-mono font-semibold text-accent1-700">
                   {formatTime(timeLeft)}
                 </span>
               </div>
               <button
                 onClick={() => setIsPaused(!isPaused)}
-                className="flex items-center space-x-2 px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                className="flex items-center space-x-2 px-3 py-1 rounded-lg bg-accent1-100 hover:bg-accent1-200 text-accent1-700 transition-all duration-200"
               >
                 {isPaused ? (
                   <>
                     <FiPlay className="w-4 h-4" />
-                    <span className="text-sm">Resume</span>
+                    <span className="text-sm font-medium">Resume</span>
                   </>
                 ) : (
                   <>
                     <FiPause className="w-4 h-4" />
-                    <span className="text-sm">Pause</span>
+                    <span className="text-sm font-medium">Pause</span>
                   </>
                 )}
               </button>
@@ -354,7 +354,7 @@ export default function QuizPage() {
 
             <button
               onClick={() => setShowConfirmSubmit(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors"
+              className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent1-500 hover:from-primary-600 hover:to-accent1-600 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               <FiFlag className="w-4 h-4" />
               <span>Submit Quiz</span>
@@ -369,7 +369,7 @@ export default function QuizPage() {
           {/* Question */}
           <div className="mb-8">
             <div className="flex items-start space-x-3 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center font-semibold text-sm">
+              <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-primary-500 to-accent1-500 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-md">
                 {currentQuestion + 1}
               </div>
               <div className="flex-1">
@@ -384,18 +384,18 @@ export default function QuizPage() {
                       <motion.button
                         key={option.id}
                         onClick={() => handleSelect(currentQ.id, option.id)}
-                        className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 shadow-sm ${
                           answers[currentQ.id] === option.id
-                            ? 'border-primary-500 bg-primary-50 text-primary-700'
-                            : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
+                            ? 'border-primary-500 bg-gradient-to-r from-primary-50 to-accent1-50 text-primary-700 shadow-md'
+                            : 'border-gray-200 hover:border-primary-300 hover:bg-primary-25 bg-white text-gray-700 hover:shadow-md'
                         }`}
-                        whileHover={{ scale: 1.02 }}
+                        whileHover={{ scale: 1.02, y: -2 }}
                         whileTap={{ scale: 0.98 }}
                       >
                         <div className="flex items-center space-x-3">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                             answers[currentQ.id] === option.id
-                              ? 'border-primary-500 bg-primary-500'
+                              ? 'border-primary-500 bg-primary-500 shadow-sm'
                               : 'border-gray-300'
                           }`}>
                             {answers[currentQ.id] === option.id && (
@@ -408,26 +408,26 @@ export default function QuizPage() {
                     ))
                   ) : (
                     // True/False question
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {[
-                        { id: 'true', text: 'True' },
-                        { id: 'false', text: 'False' }
+                        { id: 'true', text: 'True', color: 'accent2' },
+                        { id: 'false', text: 'False', color: 'error' }
                       ].map((option) => (
                         <motion.button
                           key={option.id}
                           onClick={() => handleSelect(currentQ.id, option.id)}
-                          className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                          className={`p-4 rounded-xl border-2 transition-all duration-300 shadow-sm ${
                             answers[currentQ.id] === option.id
-                              ? 'border-primary-500 bg-primary-50 text-primary-700'
-                              : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
+                              ? `border-${option.color}-500 bg-gradient-to-r from-${option.color}-50 to-${option.color}-100 text-${option.color}-700 shadow-md`
+                              : `border-gray-200 hover:border-${option.color}-300 hover:bg-${option.color}-25 bg-white text-gray-700 hover:shadow-md`
                           }`}
-                          whileHover={{ scale: 1.02 }}
+                          whileHover={{ scale: 1.02, y: -2 }}
                           whileTap={{ scale: 0.98 }}
                         >
                           <div className="flex items-center justify-center space-x-2">
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                               answers[currentQ.id] === option.id
-                                ? 'border-primary-500 bg-primary-500'
+                                ? `border-${option.color}-500 bg-${option.color}-500 shadow-sm`
                                 : 'border-gray-300'
                             }`}>
                               {answers[currentQ.id] === option.id && (
@@ -446,14 +446,14 @@ export default function QuizPage() {
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-between pt-6 border-t border-primary-200">
             <button
               onClick={handlePrevQuestion}
               disabled={currentQuestion === 0}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                 currentQuestion === 0
                   ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  : 'text-primary-600 hover:text-primary-700 hover:bg-primary-50'
               }`}
             >
               <FiArrowLeft className="w-4 h-4" />
@@ -465,12 +465,12 @@ export default function QuizPage() {
                 <button
                   key={index}
                   onClick={() => setCurrentQuestion(index)}
-                  className={`w-3 h-3 rounded-full transition-colors ${
+                  className={`w-4 h-4 rounded-full transition-all duration-200 shadow-sm ${
                     index === currentQuestion
-                      ? 'bg-primary-500'
+                      ? 'bg-gradient-to-r from-primary-500 to-accent1-500 shadow-md'
                       : answers[quiz.questions[index].id]
-                        ? 'bg-green-500'
-                        : 'bg-gray-300'
+                        ? 'bg-gradient-to-r from-accent2-500 to-green-500 shadow-md'
+                        : 'bg-gray-300 hover:bg-gray-400'
                   }`}
                   aria-label={`Go to question ${index + 1}`}
                 />
@@ -480,10 +480,10 @@ export default function QuizPage() {
             <button
               onClick={handleNextQuestion}
               disabled={currentQuestion === quiz.questions.length - 1}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                 currentQuestion === quiz.questions.length - 1
                   ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  : 'text-primary-600 hover:text-primary-700 hover:bg-primary-50'
               }`}
             >
               <span>Next</span>
@@ -506,23 +506,23 @@ export default function QuizPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-xl p-6 max-w-md w-full"
+              className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl border border-primary-100"
             >
               <div className="text-center">
-                <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiAlertTriangle className="w-6 h-6 text-yellow-600" />
+                <div className="w-16 h-16 bg-gradient-to-br from-warning-100 to-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                  <FiAlertTriangle className="w-8 h-8 text-warning-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                <h3 className="text-xl font-bold text-gray-800 mb-3">
                   Submit Quiz?
                 </h3>
-                <p className="text-gray-600 mb-6">
-                  You have answered {answeredQuestions} out of {quiz.questions.length} questions. 
+                <p className="text-gray-700 mb-8 leading-relaxed">
+                  You have answered <span className="font-semibold text-primary-600">{answeredQuestions}</span> out of <span className="font-semibold text-primary-600">{quiz.questions.length}</span> questions. 
                   Are you sure you want to submit your quiz?
                 </p>
-                <div className="flex space-x-3">
+                <div className="flex space-x-4">
                   <button
                     onClick={() => setShowConfirmSubmit(false)}
-                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200 shadow-sm"
                   >
                     Cancel
                   </button>
@@ -531,7 +531,7 @@ export default function QuizPage() {
                       setShowConfirmSubmit(false);
                       handleSubmit();
                     }}
-                    className="flex-1 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors"
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent1-500 hover:from-primary-600 hover:to-accent1-600 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
                     Submit Quiz
                   </button>
