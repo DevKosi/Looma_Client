@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  FiTrophy, 
-  FiMedal, 
   FiAward, 
   FiTrendingUp, 
   FiUsers, 
@@ -11,8 +9,9 @@ import {
   FiStar,
   FiTarget,
   FiZap,
-  FiCrown,
-  FiFilter
+  FiFilter,
+  FiHeart,
+  FiCircle
 } from 'react-icons/fi';
 import { auth, db } from '../firebase/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
@@ -110,7 +109,7 @@ export default function Leaderboard() {
   const getRankingTypeInfo = (type) => {
     switch (type) {
       case RANKING_TYPES.AVERAGE_SCORE:
-        return { icon: <FiTrophy />, label: 'Average Score', color: 'text-yellow-600' };
+        return { icon: <FiAward />, label: 'Average Score', color: 'text-yellow-600' };
       case RANKING_TYPES.TOTAL_SCORE:
         return { icon: <FiTarget />, label: 'Total Score', color: 'text-blue-600' };
       case RANKING_TYPES.QUIZ_COUNT:
@@ -120,7 +119,7 @@ export default function Leaderboard() {
       case RANKING_TYPES.RECENT_PERFORMANCE:
         return { icon: <FiStar />, label: 'Recent Performance', color: 'text-purple-600' };
       default:
-        return { icon: <FiTrophy />, label: 'Average Score', color: 'text-yellow-600' };
+        return { icon: <FiAward />, label: 'Average Score', color: 'text-yellow-600' };
     }
   };
 
@@ -141,9 +140,9 @@ export default function Leaderboard() {
   // Get rank display with appropriate icon and color
   const getRankDisplay = (rank) => {
     if (rank === 1) {
-      return { icon: <FiCrown className="text-yellow-500" />, color: 'text-yellow-600 bg-yellow-50 border-yellow-200' };
+      return { icon: <FiAward className="text-yellow-500" />, color: 'text-yellow-600 bg-yellow-50 border-yellow-200' };
     } else if (rank === 2) {
-      return { icon: <FiMedal className="text-gray-500" />, color: 'text-gray-600 bg-gray-50 border-gray-200' };
+      return { icon: <FiCircle className="text-gray-500" />, color: 'text-gray-600 bg-gray-50 border-gray-200' };
     } else if (rank === 3) {
       return { icon: <FiAward className="text-orange-500" />, color: 'text-orange-600 bg-orange-50 border-orange-200' };
     } else if (rank <= 10) {
@@ -176,7 +175,7 @@ export default function Leaderboard() {
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <FiTrophy className="text-yellow-500" />
+                <FiAward className="text-yellow-500" />
                 Leaderboards
               </h1>
               <p className="text-gray-600 mt-1">
@@ -405,7 +404,7 @@ export default function Leaderboard() {
                 })
               ) : (
                 <div className="p-8 text-center text-gray-500">
-                  <FiTrophy className="mx-auto text-4xl mb-4 opacity-50" />
+                  <FiAward className="mx-auto text-4xl mb-4 opacity-50" />
                   <p>No rankings available for the selected period</p>
                   <p className="text-sm mt-1">Be the first to take a quiz and claim the top spot!</p>
                 </div>

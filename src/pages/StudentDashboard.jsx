@@ -4,18 +4,27 @@ import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'fireb
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { runTransaction, serverTimestamp } from 'firebase/firestore';
+import { getUserPosition, calculateUserStats } from '../utils/leaderboardService';
 
 import { 
   FiLogOut, FiBook, FiAward, FiUser, 
   FiSearch, FiCheckCircle, FiBarChart2, 
   FiLock, FiX, FiChevronDown, FiClock,
-  FiCheck
+  FiCheck, FiTrendingUp
 } from 'react-icons/fi';
 
 export default function StudentDashboard() {
   const [user, setUser] = useState(null);
   const [quizzes, setQuizzes] = useState([]);
-  const [loading, setLoading] = useState({ user: true, quizzes: true });
+  const [userResults, setUserResults] = useState([]);
+  const [userStats, setUserStats] = useState(null);
+  const [userPosition, setUserPosition] = useState(null);
+  const [loading, setLoading] = useState({ 
+    user: true, 
+    quizzes: true, 
+    results: false,
+    position: false 
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [notification, setNotification] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -72,12 +81,86 @@ export default function StudentDashboard() {
           message: 'Failed to load quizzes. Please try again.'
         });
       } finally {
-        setLoading({ user: false, quizzes: false });
+        setLoading(prev => ({ ...prev, user: false, quizzes: false }));
       }
     };
 
     fetchData();
   }, [navigate]);
+
+  // Fetch user results and statistics
+  const fetchUserResults = async () => {
+    if (!user?.uid) return;
+    
+    setLoading(prev => ({ ...prev, results: true }));
+    try {
+      const allResults = [];
+      
+      // Get user's submissions from all quizzes
+      const quizzesSnapshot = await getDocs(collection(db, 'quizzes'));
+      
+      for (const quizDoc of quizzesSnapshot.docs) {
+        const submissionsQuery = query(
+          collection(db, 'quizzes', quizDoc.id, 'submissions'),
+          where('userId', '==', user.uid)
+        );
+        const submissionsSnapshot = await getDocs(submissionsQuery);
+        
+        submissionsSnapshot.docs.forEach(submissionDoc => {
+          const submission = submissionDoc.data();
+          allResults.push({
+            id: submissionDoc.id,
+            quizId: quizDoc.id,
+            quizTitle: quizDoc.data().title,
+            quizDepartment: quizDoc.data().department,
+            ...submission,
+            submittedAt: submission.submittedAt?.toDate?.() || new Date(submission.submittedAt)
+          });
+        });
+      }
+
+      // Sort by submission date (newest first)
+      allResults.sort((a, b) => b.submittedAt - a.submittedAt);
+      
+      setUserResults(allResults);
+      
+      // Calculate user statistics
+      const stats = calculateUserStats(allResults);
+      setUserStats(stats);
+      
+    } catch (error) {
+      console.error('Error fetching user results:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, results: false }));
+    }
+  };
+
+  // Fetch user position in leaderboards
+  const fetchUserPosition = async () => {
+    if (!user?.uid || !user?.department) return;
+    
+    setLoading(prev => ({ ...prev, position: true }));
+    try {
+      const position = await getUserPosition(user.uid, user.department);
+      setUserPosition(position);
+    } catch (error) {
+      console.error('Error fetching user position:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, position: false }));
+    }
+  };
+
+  // Load additional data when user changes or tabs are accessed
+  useEffect(() => {
+    if (user && (activeTab === 'results' || activeTab === 'leaderboard')) {
+      if (activeTab === 'results' && userResults.length === 0) {
+        fetchUserResults();
+      }
+      if (activeTab === 'leaderboard' && !userPosition) {
+        fetchUserPosition();
+      }
+    }
+  }, [user, activeTab]);
 
   const filteredQuizzes = quizzes.filter(quiz => {
     const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -381,14 +464,143 @@ const verifyAccessCode = async () => {
         )}
 
         {activeTab === 'results' && (
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-            <FiBarChart2 className="mx-auto text-gray-400" size={48} />
-            <h3 className="text-lg font-medium text-gray-700 mt-4">
-              My Quiz Results
-            </h3>
-            <p className="text-gray-500 mt-1">
-              Coming soon - View your performance across all quizzes
-            </p>
+          <div className="space-y-6">
+            {/* Statistics Cards */}
+            {userStats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Total Quizzes</p>
+                      <p className="text-2xl font-bold text-gray-900">{userStats.totalQuizzes}</p>
+                    </div>
+                    <FiBook className="text-blue-500" size={24} />
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Average Score</p>
+                      <p className="text-2xl font-bold text-gray-900">{userStats.averagePercentage}%</p>
+                    </div>
+                    <FiBarChart2 className="text-green-500" size={24} />
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-yellow-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Best Score</p>
+                      <p className="text-2xl font-bold text-gray-900">{userStats.highestScore}</p>
+                    </div>
+                    <FiAward className="text-yellow-500" size={24} />
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-purple-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Current Streak</p>
+                      <p className="text-2xl font-bold text-gray-900">{userStats.recentStreak}</p>
+                    </div>
+                    <FiTrendingUp className="text-purple-500" size={24} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Results Table */}
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <FiBarChart2 className="text-blue-500" />
+                  Quiz Results ({userResults.length})
+                </h2>
+              </div>
+              
+              {loading.results ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading your results...</p>
+                </div>
+              ) : userResults.length === 0 ? (
+                <div className="p-8 text-center">
+                  <FiBarChart2 className="mx-auto text-4xl text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">No Quiz Results Yet</h3>
+                  <p className="text-gray-500">Take your first quiz to see your results here!</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quiz</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {userResults.map((result, index) => (
+                        <tr key={result.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{result.quizTitle}</div>
+                              <div className="text-sm text-gray-500">{result.quizDepartment}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {result.score}/{result.total}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-1 max-w-20">
+                                <div className={`h-2 rounded-full mr-2 ${
+                                  (result.percentage || 0) >= 70 ? 'bg-green-200' :
+                                  (result.percentage || 0) >= 50 ? 'bg-yellow-200' : 'bg-red-200'
+                                }`}>
+                                  <div 
+                                    className={`h-2 rounded-full ${
+                                      (result.percentage || 0) >= 70 ? 'bg-green-500' :
+                                      (result.percentage || 0) >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                                    }`}
+                                    style={{ width: `${Math.min(result.percentage || 0, 100)}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900 ml-2">
+                                {result.percentage || 0}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {result.submittedAt.toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              (result.percentage || 0) >= 90 ? 'bg-green-100 text-green-800' :
+                              (result.percentage || 0) >= 80 ? 'bg-blue-100 text-blue-800' :
+                              (result.percentage || 0) >= 70 ? 'bg-yellow-100 text-yellow-800' :
+                              (result.percentage || 0) >= 50 ? 'bg-orange-100 text-orange-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {(result.percentage || 0) >= 90 ? 'Excellent' :
+                               (result.percentage || 0) >= 80 ? 'Very Good' :
+                               (result.percentage || 0) >= 70 ? 'Good' :
+                               (result.percentage || 0) >= 50 ? 'Fair' : 'Needs Improvement'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -411,18 +623,68 @@ const verifyAccessCode = async () => {
                 View Full Leaderboard
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
-                <h4 className="font-semibold text-gray-800 mb-2">Department Ranking</h4>
-                <p className="text-2xl font-bold text-yellow-600">#? of ?</p>
-                <p className="text-sm text-gray-600">Click "View Full" to see your position</p>
+
+            {loading.position ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-gray-50 rounded-lg animate-pulse">
+                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-8 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-300 rounded"></div>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg animate-pulse">
+                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-8 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-300 rounded"></div>
+                </div>
               </div>
-              <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                <h4 className="font-semibold text-gray-800 mb-2">Global Ranking</h4>
-                <p className="text-2xl font-bold text-blue-600">#? of ?</p>
-                <p className="text-sm text-gray-600">Compete with all students</p>
+            ) : userPosition ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                  <h4 className="font-semibold text-gray-800 mb-2">Department Ranking</h4>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    #{userPosition.department.rank || 'Unranked'} of {userPosition.department.totalParticipants || 0}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {userPosition.department.rank ? 'Your current position' : 'Take quizzes to get ranked'}
+                  </p>
+                  {userPosition.department.stats && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Avg: {userPosition.department.stats.averagePercentage}% • 
+                      Quizzes: {userPosition.department.stats.totalQuizzes}
+                    </div>
+                  )}
+                </div>
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                  <h4 className="font-semibold text-gray-800 mb-2">Global Ranking</h4>
+                  <p className="text-2xl font-bold text-blue-600">
+                    #{userPosition.global.rank || 'Unranked'} of {userPosition.global.totalParticipants || 0}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {userPosition.global.rank ? 'Compete with all students' : 'Take quizzes to get ranked'}
+                  </p>
+                  {userPosition.global.stats && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Avg: {userPosition.global.stats.averagePercentage}% • 
+                      Points: {userPosition.global.stats.totalPoints}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                  <h4 className="font-semibold text-gray-800 mb-2">Department Ranking</h4>
+                  <p className="text-2xl font-bold text-yellow-600">Not Available</p>
+                  <p className="text-sm text-gray-600">Take quizzes to see your position</p>
+                </div>
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                  <h4 className="font-semibold text-gray-800 mb-2">Global Ranking</h4>
+                  <p className="text-2xl font-bold text-blue-600">Not Available</p>
+                  <p className="text-sm text-gray-600">Take quizzes to see your position</p>
+                </div>
+              </div>
+            )}
+
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
               <p className="text-center text-gray-600">
                 🏆 Take more quizzes to improve your ranking and compete for the top spot!
@@ -432,24 +694,149 @@ const verifyAccessCode = async () => {
         )}
 
         {activeTab === 'profile' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">My Profile</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <p className="text-gray-900">{user?.fullName}</p>
+          <div className="space-y-6">
+            {/* Profile Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-sm overflow-hidden">
+              <div className="px-6 py-8 text-white">
+                <div className="flex items-center space-x-6">
+                  <div className="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <FiUser className="w-10 h-10 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">{user?.fullName || 'Student'}</h2>
+                    <p className="text-blue-100 mt-1">{user?.regNumber}</p>
+                    <p className="text-blue-200 text-sm">{user?.department} Department</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Registration Number</label>
-                <p className="text-gray-900">{user?.regNumber}</p>
+            </div>
+
+            {/* Profile Information */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Personal Information */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <FiUser className="text-blue-500" />
+                  Personal Information
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600">Full Name</label>
+                      <p className="text-gray-900 font-semibold">{user?.fullName || 'Not provided'}</p>
+                    </div>
+                    <FiUser className="text-gray-400" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600">Registration Number</label>
+                      <p className="text-gray-900 font-semibold">{user?.regNumber || 'Not provided'}</p>
+                    </div>
+                    <FiBook className="text-gray-400" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600">Department</label>
+                      <p className="text-gray-900 font-semibold">{user?.department || 'Not provided'}</p>
+                    </div>
+                    <FiBook className="text-gray-400" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600">Email Address</label>
+                      <p className="text-gray-900 font-semibold">{user?.email || 'Not provided'}</p>
+                    </div>
+                    <FiUser className="text-gray-400" />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                <p className="text-gray-900">{user?.department}</p>
+
+              {/* Academic Summary */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <FiBarChart2 className="text-green-500" />
+                  Academic Summary
+                </h3>
+                
+                {userStats ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <div>
+                        <label className="block text-sm font-medium text-green-600">Quizzes Completed</label>
+                        <p className="text-green-900 font-bold text-xl">{userStats.totalQuizzes}</p>
+                      </div>
+                      <FiBook className="text-green-500 w-6 h-6" />
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <div>
+                        <label className="block text-sm font-medium text-blue-600">Average Score</label>
+                        <p className="text-blue-900 font-bold text-xl">{userStats.averagePercentage}%</p>
+                      </div>
+                      <FiBarChart2 className="text-blue-500 w-6 h-6" />
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                      <div>
+                        <label className="block text-sm font-medium text-yellow-600">Best Performance</label>
+                        <p className="text-yellow-900 font-bold text-xl">{userStats.highestScore}</p>
+                      </div>
+                      <FiAward className="text-yellow-500 w-6 h-6" />
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                      <div>
+                        <label className="block text-sm font-medium text-purple-600">Current Streak</label>
+                        <p className="text-purple-900 font-bold text-xl">{userStats.recentStreak}</p>
+                      </div>
+                      <FiTrendingUp className="text-purple-500 w-6 h-6" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <FiBarChart2 className="mx-auto text-4xl text-gray-400 mb-4" />
+                    <p className="text-gray-500">Take your first quiz to see your academic summary!</p>
+                  </div>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <p className="text-gray-900">{user?.email}</p>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <FiClock className="text-indigo-500" />
+                Quick Actions
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  onClick={() => setActiveTab('quizzes')}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-left"
+                >
+                  <FiBook className="text-blue-500 w-6 h-6 mb-2" />
+                  <h4 className="font-semibold text-gray-800">Browse Quizzes</h4>
+                  <p className="text-gray-500 text-sm">Find and take available quizzes</p>
+                </button>
+                
+                <button
+                  onClick={() => setActiveTab('results')}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors text-left"
+                >
+                  <FiBarChart2 className="text-green-500 w-6 h-6 mb-2" />
+                  <h4 className="font-semibold text-gray-800">View Results</h4>
+                  <p className="text-gray-500 text-sm">Check your quiz performance</p>
+                </button>
+                
+                <button
+                  onClick={() => navigate('/leaderboard')}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-yellow-50 hover:border-yellow-300 transition-colors text-left"
+                >
+                  <FiAward className="text-yellow-500 w-6 h-6 mb-2" />
+                  <h4 className="font-semibold text-gray-800">Leaderboard</h4>
+                  <p className="text-gray-500 text-sm">See how you rank globally</p>
+                </button>
               </div>
             </div>
           </div>

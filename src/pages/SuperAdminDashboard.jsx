@@ -25,7 +25,7 @@ import {
   FiTrash2,
   FiCheckCircle,
   FiXCircle,
-  FiCrown,
+  FiAward,
   FiDatabase,
   FiMonitor,
   FiWifi,
@@ -409,7 +409,7 @@ export default function SuperAdminDashboard() {
               { id: 'departments', label: 'Departments', icon: <FiGlobe /> },
               { id: 'logs', label: 'Activity Logs', icon: <FiActivity /> },
               { id: 'maintenance', label: 'Maintenance', icon: <FiDatabase /> },
-              { id: 'leaderboard', label: 'Leaderboard', icon: <FiCrown /> }
+              { id: 'leaderboard', label: 'Leaderboard', icon: <FiAward /> }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -729,10 +729,10 @@ export default function SuperAdminDashboard() {
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <FiCrown className="text-yellow-500" />
-                  Global Leaderboard Management
-                </h2>
+                                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                   <FiAward className="text-yellow-500" />
+                   Global Leaderboard Management
+                 </h2>
                 <button
                   onClick={() => navigate('/leaderboard')}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -1227,7 +1227,7 @@ export default function SuperAdminDashboard() {
                        onClick={() => navigate('/leaderboard')}
                        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-sm"
                      >
-                       <FiCrown size={16} />
+                       <FiAward size={16} />
                        View Leaderboard
                      </button>
                    </div>
