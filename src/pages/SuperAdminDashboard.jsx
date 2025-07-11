@@ -1,273 +1,1242 @@
 // src/pages/SuperAdminDashboard.jsx
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { auth, db } from '../firebase/firebaseConfig';
+import { doc, getDoc, getDocs, collection, updateDoc } from 'firebase/firestore';
 import { 
+  FiShield, 
+  FiUsers, 
   FiBarChart2, 
-  FiCheckCircle, 
-  FiAlertTriangle, 
-  FiUsers,
-  FiBook,
+  FiActivity, 
+  FiAlertTriangle,
+  FiDownload,
+  FiRefreshCw,
+  FiSettings,
+  FiLogOut,
+  FiTrendingUp,
   FiClock,
-  FiSearch
+  FiHeart,
+  FiZap,
+  FiGlobe,
+  FiFilter,
+  FiEye,
+  FiEdit2,
+  FiTrash2,
+  FiCheckCircle,
+  FiXCircle,
+  FiCrown,
+  FiDatabase,
+  FiMonitor,
+  FiWifi,
+  FiServer
 } from 'react-icons/fi';
-import { db } from '../firebase/firebaseConfig';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import {
+  fetchPlatformStats,
+  fetchUserActivityLogs,
+  fetchSystemAlerts,
+  fetchDepartmentAnalytics,
+  createSystemBackup,
+  subscribeToRealTimeUpdates,
+  updateUserRole,
+  deleteUser,
+  updateQuizStatus,
+  deleteQuizGlobally,
+  TIME_FRAMES,
+  HEALTH_METRICS
+} from '../utils/superAdminService';
 
 export default function SuperAdminDashboard() {
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    activeQuizzes: 0,
-    pendingApprovals: 0,
-    departments: 0
-  });
-  const [pendingQuizzes, setPendingQuizzes] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [superAdmin, setSuperAdmin] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState({
-    stats: true,
-    quizzes: true
+    admin: true,
+    stats: false,
+    logs: false,
+    alerts: false,
+    departments: false,
+    backup: false
   });
+  
+  // Data states
+  const [platformStats, setPlatformStats] = useState(null);
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [systemAlerts, setSystemAlerts] = useState([]);
+  const [departmentAnalytics, setDepartmentAnalytics] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [allQuizzes, setAllQuizzes] = useState([]);
+  
+  // UI states
+  const [selectedTimeFrame, setSelectedTimeFrame] = useState(TIME_FRAMES.LAST_24_HOURS);
+  const [realTimeActive, setRealTimeActive] = useState(false);
+  const [notification, setNotification] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
 
-  // Fetch platform stats
+  const navigate = useNavigate();
+
+  // Verify super admin access
   useEffect(() => {
-    const fetchStats = async () => {
+    const checkSuperAdminAccess = async () => {
       try {
-        // Get total users
-        const usersQuery = query(collection(db, 'users'));
-        const usersSnapshot = await getDocs(usersQuery);
-        
-        // Get quizzes
-        const quizzesQuery = query(collection(db, 'quizzes'));
-        const quizzesSnapshot = await getDocs(quizzesQuery);
-        
-        // Get departments
-        const deptQuery = query(collection(db, 'departments'));
-        const deptSnapshot = await getDocs(deptQuery);
+        const user = auth.currentUser;
+        if (!user) {
+          navigate('/login');
+          return;
+        }
 
-        const pending = quizzesSnapshot.docs.filter(
-          q => q.data().status === 'pending'
-        ).length;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists() || userDoc.data().role !== 'superadmin') {
+          navigate('/login');
+          return;
+        }
 
-        setStats({
-          totalUsers: usersSnapshot.size,
-          activeQuizzes: quizzesSnapshot.size - pending,
-          pendingApprovals: pending,
-          departments: deptSnapshot.size
-        });
+        setSuperAdmin({ uid: user.uid, ...userDoc.data() });
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        console.error('Error checking super admin access:', error);
+        navigate('/login');
       } finally {
-        setLoading(prev => ({ ...prev, stats: false }));
+        setLoading(prev => ({ ...prev, admin: false }));
       }
     };
 
-    // Fetch pending quizzes
-    const fetchPendingQuizzes = async () => {
-      try {
-        const q = query(
-          collection(db, 'quizzes'),
-          where('status', '==', 'pending')
-        );
-        const querySnapshot = await getDocs(q);
-        setPendingQuizzes(querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })));
-      } catch (error) {
-        console.error("Error fetching quizzes:", error);
-      } finally {
-        setLoading(prev => ({ ...prev, quizzes: false }));
-      }
-    };
+    checkSuperAdminAccess();
+  }, [navigate]);
 
-    fetchStats();
-    fetchPendingQuizzes();
+  // Load platform statistics
+  const loadPlatformStats = useCallback(async () => {
+    setLoading(prev => ({ ...prev, stats: true }));
+    try {
+      const stats = await fetchPlatformStats(selectedTimeFrame);
+      setPlatformStats(stats);
+      console.log('📊 Platform stats loaded:', stats);
+    } catch (error) {
+      showNotification('Failed to load platform statistics', 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, stats: false }));
+    }
+  }, [selectedTimeFrame]);
+
+  // Load activity logs
+  const loadActivityLogs = useCallback(async () => {
+    setLoading(prev => ({ ...prev, logs: true }));
+    try {
+      const logs = await fetchUserActivityLogs(50);
+      setActivityLogs(logs);
+    } catch (error) {
+      showNotification('Failed to load activity logs', 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, logs: false }));
+    }
   }, []);
 
-  const handleApproveQuiz = async (quizId) => {
+  // Load system alerts
+  const loadSystemAlerts = useCallback(async () => {
+    setLoading(prev => ({ ...prev, alerts: true }));
     try {
-      await updateDoc(doc(db, 'quizzes', quizId), {
-        status: 'approved',
-        approvedAt: new Date()
-      });
-      setPendingQuizzes(prev => prev.filter(q => q.id !== quizId));
-      setStats(prev => ({
-        ...prev,
-        pendingApprovals: prev.pendingApprovals - 1,
-        activeQuizzes: prev.activeQuizzes + 1
-      }));
+      const alerts = await fetchSystemAlerts();
+      setSystemAlerts(alerts);
     } catch (error) {
-      console.error("Error approving quiz:", error);
+      showNotification('Failed to load system alerts', 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, alerts: false }));
+    }
+  }, []);
+
+  // Load department analytics
+  const loadDepartmentAnalytics = useCallback(async () => {
+    setLoading(prev => ({ ...prev, departments: true }));
+    try {
+      const analytics = await fetchDepartmentAnalytics();
+      setDepartmentAnalytics(analytics);
+    } catch (error) {
+      showNotification('Failed to load department analytics', 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, departments: false }));
+    }
+  }, []);
+
+  // Load all users and quizzes for management
+  const loadUsersAndQuizzes = useCallback(async () => {
+    try {
+      const [usersSnapshot, quizzesSnapshot] = await Promise.all([
+        getDocs(collection(db, 'users')),
+        getDocs(collection(db, 'quizzes'))
+      ]);
+
+      const users = usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      const quizzes = quizzesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      setAllUsers(users);
+      setAllQuizzes(quizzes);
+    } catch (error) {
+      showNotification('Failed to load users and quizzes', 'error');
+    }
+  }, []);
+
+  // Load all data when tab changes or component mounts
+  useEffect(() => {
+    if (!superAdmin) return;
+
+    loadPlatformStats();
+    loadActivityLogs();
+    loadSystemAlerts();
+    loadDepartmentAnalytics();
+    loadUsersAndQuizzes();
+  }, [superAdmin, loadPlatformStats, loadActivityLogs, loadSystemAlerts, loadDepartmentAnalytics, loadUsersAndQuizzes]);
+
+  // Set up real-time updates
+  useEffect(() => {
+    if (!realTimeActive) return;
+
+    const unsubscribe = subscribeToRealTimeUpdates((update) => {
+      console.log('🔴 Real-time update:', update);
+      setLastUpdated(new Date());
+      
+      // Refresh relevant data based on update type
+      if (update.type === 'users_updated') {
+        loadUsersAndQuizzes();
+      } else if (update.type === 'quizzes_updated') {
+        loadUsersAndQuizzes();
+        loadPlatformStats();
+      }
+    });
+
+    return unsubscribe;
+  }, [realTimeActive, loadUsersAndQuizzes, loadPlatformStats]);
+
+  // Notification system
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000);
+  };
+
+  // System backup function
+  const handleSystemBackup = async () => {
+    setLoading(prev => ({ ...prev, backup: true }));
+    try {
+      const backupData = await createSystemBackup();
+      
+      // Download backup as JSON file
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `looma-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showNotification('System backup created and downloaded successfully!');
+    } catch (error) {
+      showNotification(`Backup failed: ${error.message}`, 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, backup: false }));
     }
   };
 
-  const handleRejectQuiz = async (quizId) => {
+  // User management functions
+  const handleUpdateUserRole = async (userId, newRole) => {
     try {
-      await updateDoc(doc(db, 'quizzes', quizId), {
-        status: 'rejected',
-        rejectedAt: new Date()
-      });
-      setPendingQuizzes(prev => prev.filter(q => q.id !== quizId));
-      setStats(prev => ({
-        ...prev,
-        pendingApprovals: prev.pendingApprovals - 1
-      }));
+      await updateUserRole(userId, newRole);
+      showNotification(`User role updated to ${newRole}`);
+      loadUsersAndQuizzes();
     } catch (error) {
-      console.error("Error rejecting quiz:", error);
+      showNotification(`Failed to update user role: ${error.message}`, 'error');
     }
   };
 
-  const filteredQuizzes = pendingQuizzes.filter(quiz =>
-    quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    quiz.department.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    
+    try {
+      await deleteUser(userId);
+      showNotification('User deleted successfully');
+      loadUsersAndQuizzes();
+    } catch (error) {
+      showNotification(`Failed to delete user: ${error.message}`, 'error');
+    }
+  };
+
+  // Quiz management functions
+  const handleUpdateQuizStatus = async (quizId, newStatus) => {
+    try {
+      await updateQuizStatus(quizId, newStatus);
+      showNotification(`Quiz status updated to ${newStatus}`);
+      loadUsersAndQuizzes();
+      loadPlatformStats();
+    } catch (error) {
+      showNotification(`Failed to update quiz status: ${error.message}`, 'error');
+    }
+  };
+
+  const handleDeleteQuiz = async (quizId) => {
+    if (!window.confirm('Are you sure you want to delete this quiz globally? This will remove all associated data.')) return;
+    
+    try {
+      await deleteQuizGlobally(quizId);
+      showNotification('Quiz deleted successfully');
+      loadUsersAndQuizzes();
+      loadPlatformStats();
+    } catch (error) {
+      showNotification(`Failed to delete quiz: ${error.message}`, 'error');
+    }
+  };
+
+  // Logout function
+  const handleLogout = async () => {
+    await auth.signOut();
+    navigate('/login');
+  };
+
+  // Refresh all data
+  const refreshAllData = async () => {
+    await Promise.all([
+      loadPlatformStats(),
+      loadActivityLogs(),
+      loadSystemAlerts(),
+      loadDepartmentAnalytics(),
+      loadUsersAndQuizzes()
+    ]);
+    setLastUpdated(new Date());
+    showNotification('All data refreshed successfully');
+  };
+
+  if (loading.admin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying SuperAdmin access...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="min-h-screen bg-[#F8FAFC] p-6"
-    >
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-[#1E293B]">Super Admin Dashboard</h1>
-          <p className="text-[#64748B]">Platform oversight and management</p>
-        </div>
-        <div className="relative mt-4 md:mt-0 w-full md:w-64">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <FiSearch className="text-[#64748B]" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search quizzes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full border border-[#E2E8F0] rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
-          />
-        </div>
-      </div>
+      <header className="bg-white shadow-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <FiShield className="text-red-600" />
+                SuperAdmin Dashboard
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Global platform management and analytics
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              {/* Real-time indicator */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setRealTimeActive(!realTimeActive)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    realTimeActive 
+                      ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <div className={`w-2 h-2 rounded-full ${realTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                  {realTimeActive ? 'Live' : 'Offline'}
+                </button>
+                
+                <button
+                  onClick={refreshAllData}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 text-sm font-medium"
+                >
+                  <FiRefreshCw size={16} />
+                  Refresh
+                </button>
+              </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard 
-          icon={<FiUsers className="text-[#6366F1]" size={24} />}
-          title="Total Users"
-          value={stats.totalUsers}
-          loading={loading.stats}
-          color="bg-[#6366F1]/10"
-        />
-        <StatCard 
-          icon={<FiBook className="text-[#10B981]" size={24} />}
-          title="Active Quizzes"
-          value={stats.activeQuizzes}
-          loading={loading.stats}
-          color="bg-[#10B981]/10"
-        />
-        <StatCard 
-          icon={<FiAlertTriangle className="text-[#F59E0B]" size={24} />}
-          title="Pending Approvals"
-          value={stats.pendingApprovals}
-          loading={loading.stats}
-          color="bg-[#F59E0B]/10"
-        />
-        <StatCard 
-          icon={<FiBarChart2 className="text-[#0EA5E9]" size={24} />}
-          title="Departments"
-          value={stats.departments}
-          loading={loading.stats}
-          color="bg-[#0EA5E9]/10"
-        />
-      </div>
+              <span className="text-sm text-gray-500">
+                Updated: {lastUpdated.toLocaleTimeString()}
+              </span>
 
-      {/* Pending Approvals Section */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-[#E2E8F0]">
-          <h2 className="text-xl font-semibold text-[#1E293B] flex items-center">
-            <FiClock className="mr-2 text-[#F59E0B]" />
-            Quizzes Pending Approval ({pendingQuizzes.length})
-          </h2>
-        </div>
-
-        {loading.quizzes ? (
-          <div className="p-6 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#6366F1]"></div>
-          </div>
-        ) : filteredQuizzes.length === 0 ? (
-          <div className="p-6 text-center text-[#64748B]">
-            {searchTerm ? 'No matching quizzes found' : 'No quizzes pending approval'}
-          </div>
-        ) : (
-          <div className="divide-y divide-[#E2E8F0]">
-            {filteredQuizzes.map((quiz) => (
-              <motion.div
-                key={quiz.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-6 flex flex-col md:flex-row md:items-center justify-between"
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium"
               >
-                <div className="mb-4 md:mb-0">
-                  <h3 className="font-medium text-[#1E293B]">{quiz.title}</h3>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <span className="text-sm px-2 py-1 bg-[#E2E8F0] rounded-full text-[#1E293B]">
-                      {quiz.department}
-                    </span>
-                    <span className="text-sm px-2 py-1 bg-[#E2E8F0] rounded-full text-[#1E293B]">
-                      {quiz.questions?.length || 0} questions
-                    </span>
-                    <span className="text-sm px-2 py-1 bg-[#E2E8F0] rounded-full text-[#1E293B]">
-                      Created by: {quiz.createdBy || 'Admin'}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleApproveQuiz(quiz.id)}
-                    className="px-4 py-2 bg-[#10B981] text-white rounded-lg flex items-center"
-                  >
-                    <FiCheckCircle className="mr-2" /> Approve
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleRejectQuiz(quiz.id)}
-                    className="px-4 py-2 bg-[#F43F5E] text-white rounded-lg flex items-center"
-                  >
-                    <FiAlertTriangle className="mr-2" /> Reject
-                  </motion.button>
-                </div>
-              </motion.div>
+                <FiLogOut /> Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Notification */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-20 right-4 z-50"
+          >
+            <div className={`p-4 rounded-lg shadow-lg ${
+              notification.type === 'error' 
+                ? 'bg-red-50 text-red-700 border border-red-200' 
+                : 'bg-green-50 text-green-700 border border-green-200'
+            }`}>
+              {notification.message}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex overflow-x-auto">
+            {[
+              { id: 'overview', label: 'System Overview', icon: <FiMonitor /> },
+              { id: 'analytics', label: 'Analytics', icon: <FiBarChart2 /> },
+              { id: 'users', label: 'User Management', icon: <FiUsers /> },
+              { id: 'quizzes', label: 'Quiz Management', icon: <FiSettings /> },
+              { id: 'departments', label: 'Departments', icon: <FiGlobe /> },
+              { id: 'logs', label: 'Activity Logs', icon: <FiActivity /> },
+              { id: 'maintenance', label: 'Maintenance', icon: <FiDatabase /> },
+              { id: 'leaderboard', label: 'Leaderboard', icon: <FiCrown /> }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap border-b-2 transition-colors ${
+                  activeTab === tab.id 
+                    ? 'text-blue-600 border-blue-600' 
+                    : 'text-gray-500 hover:text-gray-700 border-transparent'
+                }`}
+              >
+                {tab.icon} {tab.label}
+              </button>
             ))}
           </div>
+        </div>
+      </nav>
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* System Overview Tab */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            {/* System Health */}
+            {platformStats && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <FiHeart className="text-red-500" />
+                    System Health
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={selectedTimeFrame}
+                      onChange={(e) => setSelectedTimeFrame(e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+                    >
+                      <option value={TIME_FRAMES.LAST_HOUR}>Last Hour</option>
+                      <option value={TIME_FRAMES.LAST_24_HOURS}>Last 24 Hours</option>
+                      <option value={TIME_FRAMES.LAST_WEEK}>Last Week</option>
+                      <option value={TIME_FRAMES.LAST_MONTH}>Last Month</option>
+                      <option value={TIME_FRAMES.ALL_TIME}>All Time</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  <div className="text-center">
+                    <div className={`text-4xl font-bold mb-2 ${
+                      platformStats.health.status.color === 'green' ? 'text-green-600' :
+                      platformStats.health.status.color === 'blue' ? 'text-blue-600' :
+                      platformStats.health.status.color === 'yellow' ? 'text-yellow-600' :
+                      platformStats.health.status.color === 'orange' ? 'text-orange-600' :
+                      'text-red-600'
+                    }`}>
+                      {platformStats.health.score}%
+                    </div>
+                    <div className="text-sm text-gray-600">Overall Health</div>
+                  </div>
+
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-blue-600 mb-2">{platformStats.users.total}</div>
+                    <div className="text-sm text-gray-600">Total Users</div>
+                  </div>
+
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-green-600 mb-2">{platformStats.quizzes.total}</div>
+                    <div className="text-sm text-gray-600">Total Quizzes</div>
+                  </div>
+
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-purple-600 mb-2">{platformStats.submissions.total}</div>
+                    <div className="text-sm text-gray-600">Total Submissions</div>
+                  </div>
+                </div>
+
+                {/* Health Factors */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {Object.entries(platformStats.health.factors).map(([factor, score]) => (
+                    <div key={factor} className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium text-gray-700 capitalize">
+                          {factor.replace(/([A-Z])/g, ' $1').trim()}
+                        </span>
+                        <span className="text-sm font-bold text-gray-900">{Math.round(score)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            score >= 80 ? 'bg-green-500' :
+                            score >= 60 ? 'bg-blue-500' :
+                            score >= 40 ? 'bg-yellow-500' :
+                            score >= 20 ? 'bg-orange-500' : 'bg-red-500'
+                          }`}
+                          style={{ width: `${Math.min(score, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recent Alerts */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <FiAlertTriangle className="text-yellow-500" />
+                System Alerts ({systemAlerts.length})
+              </h2>
+              {systemAlerts.length > 0 ? (
+                <div className="space-y-3">
+                  {systemAlerts.slice(0, 5).map(alert => (
+                    <div key={alert.id} className={`p-3 rounded-lg border-l-4 ${
+                      alert.severity === 'high' ? 'bg-red-50 border-red-500' :
+                      alert.severity === 'medium' ? 'bg-yellow-50 border-yellow-500' :
+                      'bg-blue-50 border-blue-500'
+                    }`}>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium text-gray-900 flex items-center gap-2">
+                            <span>{alert.icon}</span>
+                            {alert.title}
+                          </div>
+                          <div className="text-sm text-gray-600 mt-1">{alert.message}</div>
+                        </div>
+                        <span className="text-xs text-gray-500">{alert.timestamp.toLocaleTimeString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-4">
+                  <FiCheckCircle className="mx-auto text-4xl mb-2 text-green-500" />
+                  <p>No system alerts - everything is running smoothly!</p>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Stats Grid */}
+            {platformStats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">User Distribution</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Students</span>
+                      <span className="font-semibold">{platformStats.users.byRole.students?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Admins</span>
+                      <span className="font-semibold">{platformStats.users.byRole.admins?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">SuperAdmins</span>
+                      <span className="font-semibold">{platformStats.users.byRole.superAdmins?.length || 0}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Quiz Status</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Approved</span>
+                      <span className="font-semibold text-green-600">{platformStats.quizzes.byStatus.approved?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Pending</span>
+                      <span className="font-semibold text-yellow-600">{platformStats.quizzes.byStatus.pending?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Draft</span>
+                      <span className="font-semibold text-gray-600">{platformStats.quizzes.byStatus.draft?.length || 0}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Activity Metrics</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Avg per Quiz</span>
+                      <span className="font-semibold">{platformStats.submissions.averagePerQuiz}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Avg per User</span>
+                      <span className="font-semibold">{platformStats.submissions.averagePerUser}</span>
+                    </div>
+                    {platformStats.submissions.recent !== null && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Recent Activity</span>
+                        <span className="font-semibold text-blue-600">{platformStats.submissions.recent}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
-      </div>
 
-      {/* Additional sections can be added here for:
-         - User management
-         - Department management
-         - Platform analytics
-      */}
-    </motion.div>
-  );
-}
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-6">Platform Analytics</h2>
+              
+              {platformStats ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Department Distribution */}
+                  <div>
+                    <h3 className="font-medium text-gray-800 mb-4">Users by Department</h3>
+                    <div className="space-y-3">
+                      {Object.entries(platformStats.users.byDepartment).map(([dept, count]) => (
+                        <div key={dept} className="flex justify-between items-center">
+                          <span className="text-gray-600">{dept}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${(count / platformStats.users.total) * 100}%` }}
+                              />
+                            </div>
+                            <span className="font-semibold w-8 text-right">{count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-// StatCard Component
-const StatCard = ({ icon, title, value, loading, color }) => (
-  <motion.div 
-    whileHover={{ y: -5 }}
-    className={`p-6 rounded-xl ${color} flex items-center`}
-  >
-    <div className="p-3 rounded-full bg-white mr-4">
-      {icon}
-    </div>
-    <div>
-      <p className="text-sm text-[#64748B]">{title}</p>
-      {loading ? (
-        <div className="h-8 w-16 bg-[#E2E8F0] rounded mt-1 animate-pulse"></div>
-      ) : (
-        <h3 className="text-2xl font-bold text-[#1E293B]">{value}</h3>
-      )}
-    </div>
-  </motion.div>
-);
+                  {/* Quiz Distribution */}
+                  <div>
+                    <h3 className="font-medium text-gray-800 mb-4">Quizzes by Department</h3>
+                    <div className="space-y-3">
+                      {Object.entries(platformStats.quizzes.byDepartment).map(([dept, count]) => (
+                        <div key={dept} className="flex justify-between items-center">
+                          <span className="text-gray-600">{dept}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${(count / platformStats.quizzes.total) * 100}%` }}
+                              />
+                            </div>
+                            <span className="font-semibold w-8 text-right">{count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Submission Distribution */}
+                  <div>
+                    <h3 className="font-medium text-gray-800 mb-4">Submissions by Department</h3>
+                    <div className="space-y-3">
+                      {Object.entries(platformStats.submissions.byDepartment).map(([dept, count]) => (
+                        <div key={dept} className="flex justify-between items-center">
+                          <span className="text-gray-600">{dept}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-purple-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${(count / platformStats.submissions.total) * 100}%` }}
+                              />
+                            </div>
+                            <span className="font-semibold w-8 text-right">{count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Performance Trends */}
+                  <div>
+                    <h3 className="font-medium text-gray-800 mb-4">System Performance</h3>
+                    <div className="space-y-4">
+                      <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-700">System Health</span>
+                          <span className={`font-bold ${
+                            platformStats.health.status.color === 'green' ? 'text-green-600' :
+                            platformStats.health.status.color === 'blue' ? 'text-blue-600' :
+                            platformStats.health.status.color === 'yellow' ? 'text-yellow-600' :
+                            platformStats.health.status.color === 'orange' ? 'text-orange-600' :
+                            'text-red-600'
+                          }`}>
+                            {platformStats.health.status.label}
+                          </span>
+                        </div>
+                        <div className="mt-2">
+                          <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div 
+                              className={`h-3 rounded-full transition-all duration-500 ${
+                                platformStats.health.status.color === 'green' ? 'bg-green-500' :
+                                platformStats.health.status.color === 'blue' ? 'bg-blue-500' :
+                                platformStats.health.status.color === 'yellow' ? 'bg-yellow-500' :
+                                platformStats.health.status.color === 'orange' ? 'bg-orange-500' :
+                                'bg-red-500'
+                              }`}
+                              style={{ width: `${platformStats.health.score}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Leaderboard Tab */}
+        {activeTab === 'leaderboard' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <FiCrown className="text-yellow-500" />
+                  Global Leaderboard Management
+                </h2>
+                <button
+                  onClick={() => navigate('/leaderboard')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  View Full Leaderboard
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                  <h3 className="font-semibold text-gray-800 mb-2">Top Performers</h3>
+                  <p className="text-2xl font-bold text-yellow-600">View Rankings</p>
+                  <p className="text-sm text-gray-600">Monitor student performance across all departments</p>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                  <h3 className="font-semibold text-gray-800 mb-2">Competition Stats</h3>
+                  <p className="text-2xl font-bold text-blue-600">Real-time</p>
+                  <p className="text-sm text-gray-600">Track competitive engagement metrics</p>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-lg border border-green-200">
+                  <h3 className="font-semibold text-gray-800 mb-2">Achievement System</h3>
+                  <p className="text-2xl font-bold text-green-600">Active</p>
+                  <p className="text-sm text-gray-600">Streaks, points, and performance tracking</p>
+                </div>
+              </div>
+              
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <p className="text-center text-gray-600">
+                  🏆 Advanced leaderboard features include departmental rankings, global competition, streak tracking, and performance analytics.
+                  <br />
+                  <span className="text-sm text-gray-500">Click "View Full Leaderboard" to access the complete ranking system.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+                 {/* User Management Tab */}
+         {activeTab === 'users' && (
+           <div className="space-y-6">
+             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+               <div className="p-6 border-b border-gray-200">
+                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                   <FiUsers className="text-blue-500" />
+                   User Management ({allUsers.length} users)
+                 </h2>
+               </div>
+               
+               <div className="overflow-x-auto">
+                 <table className="min-w-full divide-y divide-gray-200">
+                   <thead className="bg-gray-50">
+                     <tr>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                     </tr>
+                   </thead>
+                   <tbody className="bg-white divide-y divide-gray-200">
+                     {allUsers.slice(0, 20).map(user => (
+                       <tr key={user.id} className="hover:bg-gray-50">
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           <div>
+                             <div className="text-sm font-medium text-gray-900">{user.fullName || 'N/A'}</div>
+                             <div className="text-sm text-gray-500">{user.email}</div>
+                             <div className="text-xs text-gray-400">{user.regNumber || 'No reg number'}</div>
+                           </div>
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                           {user.department || 'N/A'}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           <select
+                             value={user.role || 'student'}
+                             onChange={(e) => handleUpdateUserRole(user.id, e.target.value)}
+                             className="text-sm border border-gray-300 rounded px-2 py-1"
+                           >
+                             <option value="student">Student</option>
+                             <option value="admin">Admin</option>
+                             <option value="superadmin">SuperAdmin</option>
+                           </select>
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                           {user.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                           <div className="flex items-center gap-2">
+                             <button
+                               onClick={() => setSelectedUser(user)}
+                               className="text-blue-600 hover:text-blue-900 p-1"
+                               title="View Details"
+                             >
+                               <FiEye size={16} />
+                             </button>
+                             <button
+                               onClick={() => handleDeleteUser(user.id)}
+                               className="text-red-600 hover:text-red-900 p-1"
+                               title="Delete User"
+                             >
+                               <FiTrash2 size={16} />
+                             </button>
+                           </div>
+                         </td>
+                       </tr>
+                     ))}
+                   </tbody>
+                 </table>
+               </div>
+               
+               {allUsers.length > 20 && (
+                 <div className="p-4 text-center text-gray-500 border-t">
+                   Showing first 20 of {allUsers.length} users
+                 </div>
+               )}
+             </div>
+           </div>
+         )}
+
+         {/* Quiz Management Tab */}
+         {activeTab === 'quizzes' && (
+           <div className="space-y-6">
+             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+               <div className="p-6 border-b border-gray-200">
+                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                   <FiSettings className="text-green-500" />
+                   Quiz Management ({allQuizzes.length} quizzes)
+                 </h2>
+               </div>
+               
+               <div className="overflow-x-auto">
+                 <table className="min-w-full divide-y divide-gray-200">
+                   <thead className="bg-gray-50">
+                     <tr>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quiz</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                     </tr>
+                   </thead>
+                   <tbody className="bg-white divide-y divide-gray-200">
+                     {allQuizzes.slice(0, 20).map(quiz => (
+                       <tr key={quiz.id} className="hover:bg-gray-50">
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           <div>
+                             <div className="text-sm font-medium text-gray-900">{quiz.title}</div>
+                             <div className="text-sm text-gray-500">{quiz.description?.substring(0, 60)}...</div>
+                             <div className="text-xs text-gray-400">{quiz.questions?.length || 0} questions</div>
+                           </div>
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                           {quiz.department}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           <select
+                             value={quiz.status}
+                             onChange={(e) => handleUpdateQuizStatus(quiz.id, e.target.value)}
+                             className={`text-sm border rounded px-2 py-1 ${
+                               quiz.status === 'approved' ? 'border-green-300 bg-green-50' :
+                               quiz.status === 'pending' ? 'border-yellow-300 bg-yellow-50' :
+                               'border-gray-300 bg-gray-50'
+                             }`}
+                           >
+                             <option value="draft">Draft</option>
+                             <option value="pending">Pending</option>
+                             <option value="approved">Approved</option>
+                           </select>
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                           {quiz.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                           <div className="flex items-center gap-2">
+                             <button
+                               onClick={() => setSelectedQuiz(quiz)}
+                               className="text-blue-600 hover:text-blue-900 p-1"
+                               title="View Details"
+                             >
+                               <FiEye size={16} />
+                             </button>
+                             <button
+                               onClick={() => handleDeleteQuiz(quiz.id)}
+                               className="text-red-600 hover:text-red-900 p-1"
+                               title="Delete Quiz"
+                             >
+                               <FiTrash2 size={16} />
+                             </button>
+                           </div>
+                         </td>
+                       </tr>
+                     ))}
+                   </tbody>
+                 </table>
+               </div>
+               
+               {allQuizzes.length > 20 && (
+                 <div className="p-4 text-center text-gray-500 border-t">
+                   Showing first 20 of {allQuizzes.length} quizzes
+                 </div>
+               )}
+             </div>
+           </div>
+         )}
+
+         {/* Activity Logs Tab */}
+         {activeTab === 'logs' && (
+           <div className="space-y-6">
+             <div className="bg-white rounded-lg shadow-sm p-6">
+               <div className="flex items-center justify-between mb-6">
+                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                   <FiActivity className="text-purple-500" />
+                   Activity Logs ({activityLogs.length} recent activities)
+                 </h2>
+                 <button
+                   onClick={loadActivityLogs}
+                   className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 text-sm"
+                 >
+                   <FiRefreshCw size={16} />
+                   Refresh Logs
+                 </button>
+               </div>
+               
+               {loading.logs ? (
+                 <div className="flex justify-center py-8">
+                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                 </div>
+               ) : activityLogs.length > 0 ? (
+                 <div className="space-y-3 max-h-96 overflow-y-auto">
+                   {activityLogs.map(log => (
+                     <div key={log.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                       <div className="flex justify-between items-start">
+                         <div className="flex-1">
+                           <div className="flex items-center gap-2 mb-2">
+                             <span className="text-lg">{log.icon}</span>
+                             <span className="font-medium text-gray-900">{log.action}</span>
+                             <span className={`px-2 py-1 rounded-full text-xs ${
+                               log.severity === 'info' ? 'bg-blue-100 text-blue-800' :
+                               log.severity === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                               'bg-red-100 text-red-800'
+                             }`}>
+                               {log.severity}
+                             </span>
+                           </div>
+                           <div className="text-sm text-gray-600 mb-2">
+                             <strong>{log.user.name}</strong> ({log.user.regNumber}) - {log.user.department}
+                           </div>
+                           <div className="text-sm text-gray-500">
+                             Quiz: <strong>{log.quiz.title}</strong> ({log.quiz.department})
+                           </div>
+                           {log.details && (
+                             <div className="text-xs text-gray-400 mt-1">
+                               Score: {log.details.score}/{log.details.total} ({log.details.percentage}%) 
+                               • Time: {Math.round((log.details.timeSpent || 0) / 60)} mins
+                             </div>
+                           )}
+                         </div>
+                         <div className="text-xs text-gray-500 ml-4">
+                           {log.timestamp.toLocaleString()}
+                         </div>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               ) : (
+                 <div className="text-center text-gray-500 py-8">
+                   <FiActivity className="mx-auto text-4xl mb-4 opacity-50" />
+                   <p>No activity logs found</p>
+                 </div>
+               )}
+             </div>
+           </div>
+         )}
+
+         {/* Departments Tab */}
+         {activeTab === 'departments' && (
+           <div className="space-y-6">
+             <div className="bg-white rounded-lg shadow-sm p-6">
+               <h2 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                 <FiGlobe className="text-indigo-500" />
+                 Department Analytics
+               </h2>
+               
+               {loading.departments ? (
+                 <div className="flex justify-center py-8">
+                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                 </div>
+               ) : departmentAnalytics.length > 0 ? (
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                   {departmentAnalytics.map(dept => (
+                     <div key={dept.name} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                       <div className="flex justify-between items-start mb-4">
+                         <h3 className="font-semibold text-gray-900">{dept.name}</h3>
+                         <span className={`text-xs px-2 py-1 rounded-full ${
+                           dept.healthScore >= 80 ? 'bg-green-100 text-green-800' :
+                           dept.healthScore >= 60 ? 'bg-blue-100 text-blue-800' :
+                           dept.healthScore >= 40 ? 'bg-yellow-100 text-yellow-800' :
+                           'bg-red-100 text-red-800'
+                         }`}>
+                           {Math.round(dept.healthScore)}% Health
+                         </span>
+                       </div>
+                       
+                       <div className="space-y-3">
+                         <div className="flex justify-between">
+                           <span className="text-gray-600">Total Users</span>
+                           <span className="font-semibold">{dept.users.total}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span className="text-gray-600">Students</span>
+                           <span className="font-semibold text-blue-600">{dept.users.students}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span className="text-gray-600">Admins</span>
+                           <span className="font-semibold text-green-600">{dept.users.admins}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span className="text-gray-600">Quizzes</span>
+                           <span className="font-semibold">{dept.quizzes.total}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span className="text-gray-600">Submissions</span>
+                           <span className="font-semibold text-purple-600">{dept.submissions.total}</span>
+                         </div>
+                         {dept.submissions.averageScore > 0 && (
+                           <div className="flex justify-between">
+                             <span className="text-gray-600">Avg Score</span>
+                             <span className="font-semibold text-orange-600">{Math.round(dept.submissions.averageScore)}%</span>
+                           </div>
+                         )}
+                       </div>
+                       
+                       <div className="mt-4 pt-4 border-t border-gray-200">
+                         <div className="w-full bg-gray-200 rounded-full h-2">
+                           <div 
+                             className={`h-2 rounded-full transition-all duration-300 ${
+                               dept.healthScore >= 80 ? 'bg-green-500' :
+                               dept.healthScore >= 60 ? 'bg-blue-500' :
+                               dept.healthScore >= 40 ? 'bg-yellow-500' :
+                               'bg-red-500'
+                             }`}
+                             style={{ width: `${dept.healthScore}%` }}
+                           />
+                         </div>
+                         <div className="text-xs text-gray-500 mt-1">Department Health Score</div>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               ) : (
+                 <div className="text-center text-gray-500 py-8">
+                   <FiGlobe className="mx-auto text-4xl mb-4 opacity-50" />
+                   <p>No department data available</p>
+                 </div>
+               )}
+             </div>
+           </div>
+         )}
+
+         {/* Maintenance Tab */}
+         {activeTab === 'maintenance' && (
+           <div className="space-y-6">
+             <div className="bg-white rounded-lg shadow-sm p-6">
+               <h2 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                 <FiDatabase className="text-red-500" />
+                 System Maintenance & Backup
+               </h2>
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 {/* Backup Section */}
+                 <div className="border border-gray-200 rounded-lg p-6">
+                   <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                     <FiDownload className="text-blue-500" />
+                     System Backup
+                   </h3>
+                   <p className="text-gray-600 text-sm mb-4">
+                     Create a complete backup of all platform data including users, quizzes, submissions, and access codes.
+                   </p>
+                   <button
+                     onClick={handleSystemBackup}
+                     disabled={loading.backup}
+                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                   >
+                     {loading.backup ? (
+                       <>
+                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                         Creating Backup...
+                       </>
+                     ) : (
+                       <>
+                         <FiDownload /> Create & Download Backup
+                       </>
+                     )}
+                   </button>
+                 </div>
+
+                 {/* System Status */}
+                 <div className="border border-gray-200 rounded-lg p-6">
+                   <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                     <FiServer className="text-green-500" />
+                     System Status
+                   </h3>
+                   <div className="space-y-3">
+                     <div className="flex justify-between items-center">
+                       <span className="text-gray-600">Database</span>
+                       <span className="flex items-center gap-2 text-green-600">
+                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                         Online
+                       </span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                       <span className="text-gray-600">Authentication</span>
+                       <span className="flex items-center gap-2 text-green-600">
+                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                         Active
+                       </span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                       <span className="text-gray-600">Real-time Updates</span>
+                       <span className={`flex items-center gap-2 ${realTimeActive ? 'text-green-600' : 'text-gray-500'}`}>
+                         <div className={`w-2 h-2 rounded-full ${realTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                         {realTimeActive ? 'Enabled' : 'Disabled'}
+                       </span>
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* Platform Stats */}
+                 <div className="border border-gray-200 rounded-lg p-6">
+                   <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                     <FiBarChart2 className="text-purple-500" />
+                     Platform Metrics
+                   </h3>
+                   {platformStats && (
+                     <div className="space-y-3">
+                       <div className="flex justify-between">
+                         <span className="text-gray-600">Data Generation</span>
+                         <span className="text-sm text-gray-500">
+                           {platformStats.generatedAt.toLocaleTimeString()}
+                         </span>
+                       </div>
+                       <div className="flex justify-between">
+                         <span className="text-gray-600">Health Score</span>
+                         <span className={`font-semibold ${
+                           platformStats.health.status.color === 'green' ? 'text-green-600' :
+                           platformStats.health.status.color === 'blue' ? 'text-blue-600' :
+                           platformStats.health.status.color === 'yellow' ? 'text-yellow-600' :
+                           platformStats.health.status.color === 'orange' ? 'text-orange-600' :
+                           'text-red-600'
+                         }`}>
+                           {platformStats.health.score}%
+                         </span>
+                       </div>
+                       <div className="flex justify-between">
+                         <span className="text-gray-600">Active Period</span>
+                         <span className="text-sm text-gray-500">
+                           {platformStats.timeFrame.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                         </span>
+                       </div>
+                     </div>
+                   )}
+                 </div>
+
+                 {/* Quick Actions */}
+                 <div className="border border-gray-200 rounded-lg p-6">
+                   <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                     <FiZap className="text-yellow-500" />
+                     Quick Actions
+                   </h3>
+                   <div className="space-y-3">
+                     <button
+                       onClick={refreshAllData}
+                       className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-sm"
+                     >
+                       <FiRefreshCw size={16} />
+                       Refresh All Data
+                     </button>
+                     <button
+                       onClick={() => setRealTimeActive(!realTimeActive)}
+                       className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded text-sm ${
+                         realTimeActive 
+                           ? 'bg-red-100 hover:bg-red-200 text-red-700' 
+                           : 'bg-green-100 hover:bg-green-200 text-green-700'
+                       }`}
+                     >
+                       <FiWifi size={16} />
+                       {realTimeActive ? 'Disable' : 'Enable'} Real-time
+                     </button>
+                     <button
+                       onClick={() => navigate('/leaderboard')}
+                       className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-sm"
+                     >
+                       <FiCrown size={16} />
+                       View Leaderboard
+                     </button>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </div>
+         )}
+       </div>
+     </div>
+   );
+ }

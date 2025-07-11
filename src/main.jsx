@@ -12,6 +12,7 @@ const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const SuperAdminDashboard = lazy(() => import('./pages/SuperAdminDashboard'));
 const QuizPage = lazy(() => import('./pages/QuizPage'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 
 const Loading = () => (
   <div className="h-screen flex items-center justify-center">
@@ -33,6 +34,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/superadmin-dashboard" element={<SuperAdminDashboard />} />
           <Route path="/quiz/:id" element={<QuizPage />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
 
         </Routes>
       </Suspense>
