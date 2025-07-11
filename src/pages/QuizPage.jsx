@@ -16,15 +16,12 @@ import {
   FiXCircle
 } from 'react-icons/fi';
 import { validateSubmissionData, testCalculations } from '../utils/debugHelpers';
-import { useTheme } from '../contexts/ThemeContext';
-import ThemeToggle from '../components/ThemeToggle';
 
 export default function QuizPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const accessCode = new URLSearchParams(location.search).get('code');
-  const { isDark } = useTheme();
 
   const [quiz, setQuiz] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -216,11 +213,11 @@ export default function QuizPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center items-center">
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-500 border-t-transparent mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Loading Quiz</h2>
-          <p className="text-gray-500 dark:text-gray-400">Please wait while we prepare your assessment...</p>
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading Quiz</h2>
+          <p className="text-gray-500">Please wait while we prepare your assessment...</p>
         </div>
       </div>
     );
@@ -228,13 +225,13 @@ export default function QuizPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center items-center p-4">
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center p-4">
         <div className="text-center max-w-md">
-          <div className="bg-red-100 dark:bg-red-900/20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-            <FiAlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
+          <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <FiAlertTriangle className="w-8 h-8 text-red-600" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Error Loading Quiz</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Quiz</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => navigate('/student-dashboard')}
             className="btn-primary"
@@ -248,14 +245,14 @@ export default function QuizPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center items-center p-4">
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center p-4">
         <div className="text-center max-w-md">
-          <div className="bg-green-100 dark:bg-green-900/20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-            <FiCheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+          <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <FiCheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Quiz Submitted!</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Your score: <span className="font-semibold text-primary-600 dark:text-primary-400">{score}/{quiz.questions.length}</span>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Quiz Submitted!</h2>
+          <p className="text-gray-600 mb-4">
+            Your score: <span className="font-semibold text-primary-600">{score}/{quiz.questions.length}</span>
           </p>
           {submissionError && (
             <div className="status-error p-3 rounded-lg mb-4 text-sm">
@@ -279,15 +276,15 @@ export default function QuizPage() {
   const progress = (answeredQuestions / quiz.questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-soft border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white shadow-soft border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Back Button */}
             <button
               onClick={() => navigate('/student-dashboard')}
-              className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+              className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
             >
               <FiArrowLeft className="w-5 h-5 mr-2" />
               Back to Dashboard
@@ -295,34 +292,29 @@ export default function QuizPage() {
 
             {/* Quiz Title */}
             <div className="text-center flex-1">
-              <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-200 truncate">
+              <h1 className="text-lg font-semibold text-gray-800 truncate">
                 {quiz.title}
               </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500">
                 Question {currentQuestion + 1} of {quiz.questions.length}
               </p>
-            </div>
-
-            {/* Theme Toggle */}
-            <div className="flex items-center space-x-4">
-              <ThemeToggle />
             </div>
           </div>
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-sm font-medium text-gray-700">
               Progress: {answeredQuestions}/{quiz.questions.length} answered
             </span>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="text-sm text-gray-500">
               {Math.round(progress)}% complete
             </span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
               className="bg-primary-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
@@ -332,19 +324,19 @@ export default function QuizPage() {
       </div>
 
       {/* Timer */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <FiClock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                <span className="text-lg font-mono font-semibold text-gray-800 dark:text-gray-200">
+                <FiClock className="w-5 h-5 text-gray-500" />
+                <span className="text-lg font-mono font-semibold text-gray-800">
                   {formatTime(timeLeft)}
                 </span>
               </div>
               <button
                 onClick={() => setIsPaused(!isPaused)}
-                className="flex items-center space-x-2 px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="flex items-center space-x-2 px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
               >
                 {isPaused ? (
                   <>
@@ -377,11 +369,11 @@ export default function QuizPage() {
           {/* Question */}
           <div className="mb-8">
             <div className="flex items-start space-x-3 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full flex items-center justify-center font-semibold text-sm">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center font-semibold text-sm">
                 {currentQuestion + 1}
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 leading-relaxed">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4 leading-relaxed">
                   {currentQ.question}
                 </h2>
                 
@@ -394,8 +386,8 @@ export default function QuizPage() {
                         onClick={() => handleSelect(currentQ.id, option.id)}
                         className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
                           answers[currentQ.id] === option.id
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                            : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                            ? 'border-primary-500 bg-primary-50 text-primary-700'
+                            : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
                         }`}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
@@ -404,7 +396,7 @@ export default function QuizPage() {
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                             answers[currentQ.id] === option.id
                               ? 'border-primary-500 bg-primary-500'
-                              : 'border-gray-300 dark:border-gray-500'
+                              : 'border-gray-300'
                           }`}>
                             {answers[currentQ.id] === option.id && (
                               <FiCheck className="w-3 h-3 text-white" />
@@ -426,8 +418,8 @@ export default function QuizPage() {
                           onClick={() => handleSelect(currentQ.id, option.id)}
                           className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                             answers[currentQ.id] === option.id
-                              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                              ? 'border-primary-500 bg-primary-50 text-primary-700'
+                              : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
                           }`}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
@@ -436,7 +428,7 @@ export default function QuizPage() {
                             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                               answers[currentQ.id] === option.id
                                 ? 'border-primary-500 bg-primary-500'
-                                : 'border-gray-300 dark:border-gray-500'
+                                : 'border-gray-300'
                             }`}>
                               {answers[currentQ.id] === option.id && (
                                 <FiCheck className="w-3 h-3 text-white" />
@@ -454,14 +446,14 @@ export default function QuizPage() {
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-600">
+          <div className="flex items-center justify-between pt-6 border-t border-gray-200">
             <button
               onClick={handlePrevQuestion}
               disabled={currentQuestion === 0}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                 currentQuestion === 0
-                  ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
               }`}
             >
               <FiArrowLeft className="w-4 h-4" />
@@ -478,7 +470,7 @@ export default function QuizPage() {
                       ? 'bg-primary-500'
                       : answers[quiz.questions[index].id]
                         ? 'bg-green-500'
-                        : 'bg-gray-300 dark:bg-gray-600'
+                        : 'bg-gray-300'
                   }`}
                   aria-label={`Go to question ${index + 1}`}
                 />
@@ -490,8 +482,8 @@ export default function QuizPage() {
               disabled={currentQuestion === quiz.questions.length - 1}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                 currentQuestion === quiz.questions.length - 1
-                  ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
               }`}
             >
               <span>Next</span>
@@ -514,23 +506,23 @@ export default function QuizPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full"
+              className="bg-white rounded-xl p-6 max-w-md w-full"
             >
               <div className="text-center">
-                <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiAlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FiAlertTriangle className="w-6 h-6 text-yellow-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   Submit Quiz?
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                <p className="text-gray-600 mb-6">
                   You have answered {answeredQuestions} out of {quiz.questions.length} questions. 
                   Are you sure you want to submit your quiz?
                 </p>
                 <div className="flex space-x-3">
                   <button
                     onClick={() => setShowConfirmSubmit(false)}
-                    className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors"
                   >
                     Cancel
                   </button>
