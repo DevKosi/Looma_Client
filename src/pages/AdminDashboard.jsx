@@ -553,6 +553,12 @@ const AdminDashboard = () => {
           >
             <FiBook /> Manage Questions
           </button>
+          <button
+            onClick={() => navigate('/leaderboard')}
+            className="px-4 py-2 font-medium text-sm flex items-center gap-2 text-gray-500 hover:text-gray-700"
+          >
+            <FiUsers /> Leaderboard
+          </button>
         </div>
 
         {/* Notification */}

@@ -393,14 +393,41 @@ const verifyAccessCode = async () => {
         )}
 
         {activeTab === 'leaderboard' && (
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-            <FiAward className="mx-auto text-gray-400" size={48} />
-            <h3 className="text-lg font-medium text-gray-700 mt-4">
-              Leaderboard
-            </h3>
-            <p className="text-gray-500 mt-1">
-              Coming soon - Compare your performance with others
-            </p>
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-medium text-gray-800 flex items-center gap-2">
+                  <FiAward className="text-yellow-500" />
+                  Leaderboard Preview
+                </h3>
+                <p className="text-gray-500 text-sm">
+                  See how you rank against your peers
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/leaderboard')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                View Full Leaderboard
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                <h4 className="font-semibold text-gray-800 mb-2">Department Ranking</h4>
+                <p className="text-2xl font-bold text-yellow-600">#? of ?</p>
+                <p className="text-sm text-gray-600">Click "View Full" to see your position</p>
+              </div>
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                <h4 className="font-semibold text-gray-800 mb-2">Global Ranking</h4>
+                <p className="text-2xl font-bold text-blue-600">#? of ?</p>
+                <p className="text-sm text-gray-600">Compete with all students</p>
+              </div>
+            </div>
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <p className="text-center text-gray-600">
+                🏆 Take more quizzes to improve your ranking and compete for the top spot!
+              </p>
+            </div>
           </div>
         )}
 
