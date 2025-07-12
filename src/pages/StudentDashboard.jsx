@@ -4,7 +4,7 @@ import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'fireb
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { runTransaction, serverTimestamp } from 'firebase/firestore';
-import { getUserPosition, calculateUserStats } from '../utils/leaderboardService';
+import { calculateUserStats } from '../utils/leaderboardService';
 
 import { 
   FiLogOut, FiBook, FiAward, FiUser, 
@@ -18,12 +18,10 @@ export default function StudentDashboard() {
   const [quizzes, setQuizzes] = useState([]);
   const [userResults, setUserResults] = useState([]);
   const [userStats, setUserStats] = useState(null);
-  const [userPosition, setUserPosition] = useState(null);
   const [loading, setLoading] = useState({ 
     user: true, 
     quizzes: true, 
-    results: false,
-    position: false 
+    results: false
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [notification, setNotification] = useState(null);
@@ -135,30 +133,12 @@ export default function StudentDashboard() {
     }
   };
 
-  // Fetch user position in leaderboards
-  const fetchUserPosition = async () => {
-    if (!user?.uid || !user?.department) return;
-    
-    setLoading(prev => ({ ...prev, position: true }));
-    try {
-      const position = await getUserPosition(user.uid, user.department);
-      setUserPosition(position);
-    } catch (error) {
-      console.error('Error fetching user position:', error);
-    } finally {
-      setLoading(prev => ({ ...prev, position: false }));
-    }
-  };
+
 
   // Load additional data when user changes or tabs are accessed
   useEffect(() => {
-    if (user && (activeTab === 'results' || activeTab === 'leaderboard')) {
-      if (activeTab === 'results' && userResults.length === 0) {
-        fetchUserResults();
-      }
-      if (activeTab === 'leaderboard' && !userPosition) {
-        fetchUserPosition();
-      }
+    if (user && activeTab === 'results' && userResults.length === 0) {
+      fetchUserResults();
     }
   }, [user, activeTab]);
 
@@ -249,72 +229,77 @@ const verifyAccessCode = async () => {
     <div className="min-h-screen bg-[#F8FAFC] relative">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-2 bg-blue-100 rounded-full">
-              <FiBook className="text-blue-600" size={20} />
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 bg-blue-100 rounded-full flex-shrink-0">
+                <FiBook className="text-blue-600" size={18} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h1 className="font-bold text-gray-800 text-lg sm:text-xl truncate">Student Dashboard</h1>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">
+                  {user?.department} • {user?.regNumber}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold text-gray-800">Student Dashboard</h1>
-              <p className="text-sm text-gray-600">
-                {user?.department} • {user?.regNumber}
-              </p>
+            
+            <div className="flex items-center justify-end">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
+              >
+                <FiLogOut size={16} /> 
+                <span className="hidden sm:inline">Sign Out</span>
+                <span className="sm:hidden">Out</span>
+              </button>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium"
-            >
-              <FiLogOut /> Sign Out
-            </button>
           </div>
         </div>
       </header>
 
       {/* Navigation */}
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex overflow-x-auto">
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4">
+          <div className="flex overflow-x-auto scrollbar-hide">
             <button
               onClick={() => setActiveTab('quizzes')}
-              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap transition-colors ${
                 activeTab === 'quizzes' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              <FiBook size={16} /> Available Quizzes
+              <FiBook size={14} className="sm:w-4 sm:h-4" /> 
+              <span className="hidden xs:inline">Available </span>Quizzes
             </button>
             <button
               onClick={() => setActiveTab('results')}
-              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap transition-colors ${
                 activeTab === 'results' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              <FiBarChart2 size={16} /> My Results
+              <FiBarChart2 size={14} className="sm:w-4 sm:h-4" /> 
+              <span className="hidden xs:inline">My </span>Results
             </button>
             <button
-              onClick={() => setActiveTab('leaderboard')}
-              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'leaderboard' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
-              }`}
+              onClick={() => navigate('/leaderboard')}
+              className="px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap text-gray-500 hover:text-gray-700 hover:text-blue-600 transition-colors"
             >
-              <FiAward size={16} /> Leaderboard
+              <FiAward size={14} className="sm:w-4 sm:h-4" /> Leaderboard
             </button>
             <button
               onClick={() => setActiveTab('profile')}
-              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap transition-colors ${
                 activeTab === 'profile' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              <FiUser size={16} /> My Profile
+              <FiUser size={14} className="sm:w-4 sm:h-4" /> 
+              <span className="hidden xs:inline">My </span>Profile
             </button>
           </div>
         </div>
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {/* Notification */}
         <AnimatePresence>
           {notification && (
@@ -336,39 +321,39 @@ const verifyAccessCode = async () => {
         {activeTab === 'quizzes' && (
           <>
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div className="relative flex-1">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiSearch className="text-gray-400" />
+                  <FiSearch className="text-gray-400" size={16} />
                 </div>
                 <input
                   type="text"
                   placeholder="Search quizzes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2.5 sm:py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
               </div>
 
-              <div className="relative">
+              <div className="relative sm:w-48 lg:w-64">
                 <button
                   onClick={() => setShowDepartments(!showDepartments)}
-                  className="flex items-center justify-between gap-2 px-4 py-2 w-full md:w-64 border border-gray-300 rounded-lg bg-white"
+                  className="flex items-center justify-between gap-2 px-4 py-2.5 sm:py-2 w-full border border-gray-300 rounded-lg bg-white text-sm"
                 >
-                  <span>
+                  <span className="truncate">
                     {departmentFilter === 'all' ? 'All Departments' : departmentFilter}
                   </span>
-                  <FiChevronDown className={`transition-transform ${showDepartments ? 'rotate-180' : ''}`} />
+                  <FiChevronDown className={`transition-transform flex-shrink-0 ${showDepartments ? 'rotate-180' : ''}`} size={16} />
                 </button>
 
                 {showDepartments && (
-                  <div className="absolute z-10 mt-1 w-full md:w-64 bg-white border border-gray-300 rounded-lg shadow-lg">
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     <button
                       onClick={() => {
                         setDepartmentFilter('all');
                         setShowDepartments(false);
                       }}
-                      className={`block w-full text-left px-4 py-2 hover:bg-gray-100 ${
+                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
                         departmentFilter === 'all' ? 'bg-blue-50 text-blue-600' : ''
                       }`}
                     >
@@ -381,7 +366,7 @@ const verifyAccessCode = async () => {
                           setDepartmentFilter(dept);
                           setShowDepartments(false);
                         }}
-                        className={`block w-full text-left px-4 py-2 hover:bg-gray-100 ${
+                        className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 truncate ${
                           departmentFilter === dept ? 'bg-blue-50 text-blue-600' : ''
                         }`}
                       >
@@ -395,52 +380,52 @@ const verifyAccessCode = async () => {
 
             {/* Quizzes Grid */}
             {loading.quizzes ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-lg shadow-sm p-6 h-48 animate-pulse"></div>
+                  <div key={i} className="bg-white rounded-lg shadow-sm p-4 sm:p-6 h-40 sm:h-48 animate-pulse"></div>
                 ))}
               </div>
             ) : filteredQuizzes.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-                <FiBook className="mx-auto text-gray-400" size={48} />
-                <h3 className="text-lg font-medium text-gray-700 mt-4">
+              <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8 text-center">
+                <FiBook className="mx-auto text-gray-400" size={40} />
+                <h3 className="text-base sm:text-lg font-medium text-gray-700 mt-4">
                   {searchTerm || departmentFilter !== 'all' 
                     ? 'No matching quizzes found' 
                     : 'No quizzes available yet'}
                 </h3>
-                <p className="text-gray-500 mt-1">
+                <p className="text-sm sm:text-base text-gray-500 mt-1">
                   {searchTerm || departmentFilter !== 'all'
                     ? 'Try adjusting your search or filter'
                     : 'Check back later for new quizzes'}
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {filteredQuizzes.map((quiz) => (
                   <motion.div
                     key={quiz.id}
-                    whileHover={{ y: -5 }}
+                    whileHover={{ y: -2 }}
                     className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:border-blue-200 transition-all"
                   >
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded-full flex items-center gap-1">
-                          <FiCheckCircle size={12} /> Approved
+                    <div className="p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
+                        <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded-full flex items-center gap-1 w-fit">
+                          <FiCheckCircle size={10} /> Approved
                         </span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full truncate max-w-24 sm:max-w-none">
                             {quiz.department}
                           </span>
                           <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <FiClock size={12} /> {quiz.timeLimit} min
+                            <FiClock size={10} /> {quiz.timeLimit} min
                           </span>
                         </div>
                       </div>
 
-                      <h3 className="font-bold text-gray-800 mb-2 line-clamp-2">
+                      <h3 className="font-bold text-gray-800 mb-2 text-sm sm:text-base line-clamp-2">
                         {quiz.title}
                       </h3>
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-4 line-clamp-3">
                         {quiz.description}
                       </p>
 
@@ -450,9 +435,9 @@ const verifyAccessCode = async () => {
                         </span>
                         <button
                           onClick={() => handleTakeQuiz(quiz)}
-                          className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                          className="text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 px-2 py-1 rounded hover:bg-blue-50 transition-colors"
                         >
-                          <FiLock size={14} /> Take Quiz
+                          <FiLock size={12} /> Take Quiz
                         </button>
                       </div>
                     </div>
@@ -467,44 +452,44 @@ const verifyAccessCode = async () => {
           <div className="space-y-6">
             {/* Statistics Cards */}
             {userStats && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border-l-4 border-blue-500">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Total Quizzes</p>
-                      <p className="text-2xl font-bold text-gray-900">{userStats.totalQuizzes}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Quizzes</p>
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900">{userStats.totalQuizzes}</p>
                     </div>
-                    <FiBook className="text-blue-500" size={24} />
+                    <FiBook className="text-blue-500 flex-shrink-0" size={20} />
                   </div>
                 </div>
                 
-                <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-500">
+                <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border-l-4 border-green-500">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Average Score</p>
-                      <p className="text-2xl font-bold text-gray-900">{userStats.averagePercentage}%</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Average Score</p>
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900">{userStats.averagePercentage}%</p>
                     </div>
-                    <FiBarChart2 className="text-green-500" size={24} />
+                    <FiBarChart2 className="text-green-500 flex-shrink-0" size={20} />
                   </div>
                 </div>
                 
-                <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-yellow-500">
+                <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border-l-4 border-yellow-500">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Best Score</p>
-                      <p className="text-2xl font-bold text-gray-900">{userStats.highestScore}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Best Score</p>
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900">{userStats.highestScore}</p>
                     </div>
-                    <FiAward className="text-yellow-500" size={24} />
+                    <FiAward className="text-yellow-500 flex-shrink-0" size={20} />
                   </div>
                 </div>
                 
-                <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-purple-500">
+                <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border-l-4 border-purple-500">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Current Streak</p>
-                      <p className="text-2xl font-bold text-gray-900">{userStats.recentStreak}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Current Streak</p>
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900">{userStats.recentStreak}</p>
                     </div>
-                    <FiTrendingUp className="text-purple-500" size={24} />
+                    <FiTrendingUp className="text-purple-500 flex-shrink-0" size={20} />
                   </div>
                 </div>
               </div>
@@ -604,94 +589,7 @@ const verifyAccessCode = async () => {
           </div>
         )}
 
-        {activeTab === 'leaderboard' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-medium text-gray-800 flex items-center gap-2">
-                  <FiAward className="text-yellow-500" />
-                  Leaderboard Preview
-                </h3>
-                <p className="text-gray-500 text-sm">
-                  See how you rank against your peers
-                </p>
-              </div>
-              <button
-                onClick={() => navigate('/leaderboard')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                View Full Leaderboard
-              </button>
-            </div>
 
-            {loading.position ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-gray-50 rounded-lg animate-pulse">
-                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-8 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-3 bg-gray-300 rounded"></div>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg animate-pulse">
-                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-8 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-3 bg-gray-300 rounded"></div>
-                </div>
-              </div>
-            ) : userPosition ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
-                  <h4 className="font-semibold text-gray-800 mb-2">Department Ranking</h4>
-                  <p className="text-2xl font-bold text-yellow-600">
-                    #{userPosition.department.rank || 'Unranked'} of {userPosition.department.totalParticipants || 0}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {userPosition.department.rank ? 'Your current position' : 'Take quizzes to get ranked'}
-                  </p>
-                  {userPosition.department.stats && (
-                    <div className="mt-2 text-xs text-gray-500">
-                      Avg: {userPosition.department.stats.averagePercentage}% • 
-                      Quizzes: {userPosition.department.stats.totalQuizzes}
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                  <h4 className="font-semibold text-gray-800 mb-2">Global Ranking</h4>
-                  <p className="text-2xl font-bold text-blue-600">
-                    #{userPosition.global.rank || 'Unranked'} of {userPosition.global.totalParticipants || 0}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {userPosition.global.rank ? 'Compete with all students' : 'Take quizzes to get ranked'}
-                  </p>
-                  {userPosition.global.stats && (
-                    <div className="mt-2 text-xs text-gray-500">
-                      Avg: {userPosition.global.stats.averagePercentage}% • 
-                      Points: {userPosition.global.stats.totalPoints}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
-                  <h4 className="font-semibold text-gray-800 mb-2">Department Ranking</h4>
-                  <p className="text-2xl font-bold text-yellow-600">Not Available</p>
-                  <p className="text-sm text-gray-600">Take quizzes to see your position</p>
-                </div>
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                  <h4 className="font-semibold text-gray-800 mb-2">Global Ranking</h4>
-                  <p className="text-2xl font-bold text-blue-600">Not Available</p>
-                  <p className="text-sm text-gray-600">Take quizzes to see your position</p>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <p className="text-center text-gray-600">
-                🏆 Take more quizzes to improve your ranking and compete for the top spot!
-              </p>
-            </div>
-          </div>
-        )}
 
         {activeTab === 'profile' && (
           <div className="space-y-6">

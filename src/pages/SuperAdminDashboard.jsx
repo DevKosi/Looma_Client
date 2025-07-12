@@ -326,24 +326,36 @@ export default function SuperAdminDashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <FiShield className="text-red-600" />
-                SuperAdmin Dashboard
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Global platform management and analytics
-              </p>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {/* Top row - Title and logout */}
+            <div className="flex justify-between items-start">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+                  <FiShield className="text-red-600 flex-shrink-0" size={20} />
+                  <span className="truncate">SuperAdmin Dashboard</span>
+                </h1>
+                <p className="text-xs sm:text-sm lg:text-base text-gray-600 mt-1">
+                  Global platform management and analytics
+                </p>
+              </div>
+              
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium px-3 py-2 rounded-lg hover:bg-red-50 transition-colors ml-2"
+              >
+                <FiLogOut size={16} /> 
+                <span className="hidden sm:inline">Logout</span>
+              </button>
             </div>
-            
-            <div className="flex items-center gap-4">
+
+            {/* Bottom row - Controls */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               {/* Real-time indicator */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setRealTimeActive(!realTimeActive)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                     realTimeActive 
                       ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -355,23 +367,16 @@ export default function SuperAdminDashboard() {
                 
                 <button
                   onClick={refreshAllData}
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 text-sm font-medium"
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 text-xs sm:text-sm font-medium"
                 >
-                  <FiRefreshCw size={16} />
-                  Refresh
+                  <FiRefreshCw size={14} />
+                  <span className="hidden sm:inline">Refresh</span>
                 </button>
               </div>
 
-              <span className="text-sm text-gray-500">
+              <span className="text-xs sm:text-sm text-gray-500">
                 Updated: {lastUpdated.toLocaleTimeString()}
               </span>
-
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium"
-              >
-                <FiLogOut /> Logout
-              </button>
             </div>
           </div>
         </div>
@@ -398,36 +403,37 @@ export default function SuperAdminDashboard() {
       </AnimatePresence>
 
       {/* Navigation */}
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex overflow-x-auto">
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4">
+          <div className="flex overflow-x-auto scrollbar-hide">
             {[
-              { id: 'overview', label: 'System Overview', icon: <FiMonitor /> },
+              { id: 'overview', label: 'Overview', icon: <FiMonitor /> },
               { id: 'analytics', label: 'Analytics', icon: <FiBarChart2 /> },
-              { id: 'users', label: 'User Management', icon: <FiUsers /> },
-              { id: 'quizzes', label: 'Quiz Management', icon: <FiSettings /> },
+              { id: 'users', label: 'Users', icon: <FiUsers /> },
+              { id: 'quizzes', label: 'Quizzes', icon: <FiSettings /> },
               { id: 'departments', label: 'Departments', icon: <FiGlobe /> },
-              { id: 'logs', label: 'Activity Logs', icon: <FiActivity /> },
+              { id: 'logs', label: 'Logs', icon: <FiActivity /> },
               { id: 'maintenance', label: 'Maintenance', icon: <FiDatabase /> },
               { id: 'leaderboard', label: 'Leaderboard', icon: <FiAward /> }
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap border-b-2 transition-colors ${
+                className={`px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap border-b-2 transition-colors ${
                   activeTab === tab.id 
                     ? 'text-blue-600 border-blue-600' 
                     : 'text-gray-500 hover:text-gray-700 border-transparent'
                 }`}
               >
-                {tab.icon} {tab.label}
+                {React.cloneElement(tab.icon, { size: 14 })} 
+                <span className="hidden xs:inline sm:inline">{tab.label}</span>
               </button>
             ))}
           </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {/* System Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
@@ -454,9 +460,9 @@ export default function SuperAdminDashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                  <div className="text-center">
-                    <div className={`text-4xl font-bold mb-2 ${
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                  <div className="text-center bg-white rounded-lg p-3 sm:p-4 shadow-sm">
+                    <div className={`text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2 ${
                       platformStats.health.status.color === 'green' ? 'text-green-600' :
                       platformStats.health.status.color === 'blue' ? 'text-blue-600' :
                       platformStats.health.status.color === 'yellow' ? 'text-yellow-600' :
@@ -465,27 +471,27 @@ export default function SuperAdminDashboard() {
                     }`}>
                       {platformStats.health.score}%
                     </div>
-                    <div className="text-sm text-gray-600">Overall Health</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Overall Health</div>
                   </div>
 
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-blue-600 mb-2">{platformStats.users.total}</div>
-                    <div className="text-sm text-gray-600">Total Users</div>
+                  <div className="text-center bg-white rounded-lg p-3 sm:p-4 shadow-sm">
+                    <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-600 mb-1 sm:mb-2">{platformStats.users.total}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Total Users</div>
                   </div>
 
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-green-600 mb-2">{platformStats.quizzes.total}</div>
-                    <div className="text-sm text-gray-600">Total Quizzes</div>
+                  <div className="text-center bg-white rounded-lg p-3 sm:p-4 shadow-sm">
+                    <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-green-600 mb-1 sm:mb-2">{platformStats.quizzes.total}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Total Quizzes</div>
                   </div>
 
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-purple-600 mb-2">{platformStats.submissions.total}</div>
-                    <div className="text-sm text-gray-600">Total Submissions</div>
+                  <div className="text-center bg-white rounded-lg p-3 sm:p-4 shadow-sm">
+                    <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-purple-600 mb-1 sm:mb-2">{platformStats.submissions.total}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Total Submissions</div>
                   </div>
                 </div>
 
                 {/* Health Factors */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   {Object.entries(platformStats.health.factors).map(([factor, score]) => (
                     <div key={factor} className="bg-gray-50 rounded-lg p-4">
                       <div className="flex justify-between items-center mb-2">

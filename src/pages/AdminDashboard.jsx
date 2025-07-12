@@ -470,26 +470,30 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold text-gray-800">Admin Dashboard</h1>
-            <p className="text-sm text-gray-600">
-              {admin?.department} Department
-            </p>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-800 truncate">Admin Dashboard</h1>
+              <p className="text-xs sm:text-sm text-gray-600 truncate">
+                {admin?.department} Department
+              </p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium px-3 py-2 rounded-lg hover:bg-red-50 transition-colors self-end sm:self-auto"
+            >
+              <FiLogOut size={16} /> 
+              <span className="hidden sm:inline">Logout</span>
+              <span className="sm:hidden">Out</span>
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-red-600 hover:text-red-700"
-          >
-            <FiLogOut /> Logout
-          </button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <StatCard 
             icon={<FiCodesandbox className="text-blue-500" size={20} />}
             title="Total Quizzes"
@@ -1090,17 +1094,17 @@ const AdminDashboard = () => {
 
 // StatCard Component
 const StatCard = ({ icon, title, value, loading }) => (
-  <div className="bg-white rounded-lg shadow-sm p-4">
-    <div className="flex items-center gap-3">
-      <div className="p-2 bg-gray-100 rounded-full">
-        {icon}
+  <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4">
+    <div className="flex items-center gap-2 sm:gap-3">
+      <div className="p-1.5 sm:p-2 bg-gray-100 rounded-full flex-shrink-0">
+        {React.cloneElement(icon, { size: 16 })}
       </div>
-      <div>
-        <p className="text-sm text-gray-500">{title}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs sm:text-sm text-gray-500 truncate">{title}</p>
         {loading ? (
-          <div className="h-6 w-12 bg-gray-200 rounded mt-1 animate-pulse"></div>
+          <div className="h-5 sm:h-6 w-10 sm:w-12 bg-gray-200 rounded mt-1 animate-pulse"></div>
         ) : (
-          <p className="text-xl font-semibold text-gray-800">{value}</p>
+          <p className="text-lg sm:text-xl font-semibold text-gray-800">{value}</p>
         )}
       </div>
     </div>
