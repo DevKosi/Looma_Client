@@ -470,75 +470,95 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-            <div>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-800">Admin Dashboard</h1>
-              <p className="text-xs sm:text-sm text-gray-600">
-                {admin?.department} Department
-              </p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm"
-            >
-              <FiLogOut /> 
-              <span className="hidden sm:inline">Logout</span>
-            </button>
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">Admin Dashboard</h1>
+            <p className="text-sm text-gray-600">
+              {admin?.department} Department
+            </p>
           </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-red-600 hover:text-red-700"
+          >
+            <FiLogOut /> Logout
+          </button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <main className="max-w-7xl mx-auto px-4 py-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <StatCard 
-            icon={<FiCodesandbox className="text-blue-500" size={18} />}
+            icon={<FiCodesandbox className="text-blue-500" size={20} />}
             title="Total Quizzes"
             value={stats.totalQuizzes}
             loading={loading.quizzes}
           />
           <StatCard 
-            icon={<FiBarChart2 className="text-green-500" size={18} />}
+            icon={<FiBarChart2 className="text-green-500" size={20} />}
             title="Active Quizzes"
             value={stats.activeQuizzes}
             loading={loading.quizzes}
           />
           <StatCard 
-            icon={<FiClock className="text-orange-500" size={18} />}
+            icon={<FiClock className="text-yellow-500" size={20} />}
             title="Draft Quizzes"
             value={stats.draftQuizzes}
             loading={loading.quizzes}
           />
           <StatCard 
-            icon={<FiUsers className="text-purple-500" size={18} />}
-            title="Participants"
+            icon={<FiUsers className="text-purple-500" size={20} />}
+            title="Total Participants"
             value={stats.totalParticipants}
             loading={loading.quizzes}
           />
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="bg-white rounded-lg shadow-sm mb-6 overflow-hidden">
-          <div className="flex overflow-x-auto scrollbar-hide">
-            {[
-              { id: 'create', label: 'Create Quiz', icon: <FiPlus size={16} /> },
-              { id: 'manage', label: 'Manage Quizzes', icon: <FiList size={16} /> },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0 border-b-2 transition-colors ${
-                  activeTab === tab.id 
-                    ? 'text-blue-600 border-blue-600 bg-blue-50' 
-                    : 'text-gray-500 hover:text-gray-700 border-transparent'
-                }`}
-              >
-                {tab.icon} {tab.label}
-              </button>
-            ))}
-          </div>
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 mb-6">
+          <button
+            onClick={() => {
+              setActiveTab('create');
+              setEditingQuiz(null);
+            }}
+            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
+              activeTab === 'create' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FiPlus /> {editingQuiz ? 'Edit Quiz' : 'Create Quiz'}
+          </button>
+          <button
+            onClick={() => setActiveTab('manage')}
+            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
+              activeTab === 'manage' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FiList /> Manage Quizzes
+          </button>
+          <button
+            onClick={() => setActiveTab('results')}
+            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
+              activeTab === 'results' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FiBarChart2 /> Quiz Results
+          </button>
+          <button
+            onClick={() => setActiveTab('questions')}
+            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
+              activeTab === 'questions' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FiBook /> Manage Questions
+          </button>
+          <button
+            onClick={() => navigate('/leaderboard')}
+            className="px-4 py-2 font-medium text-sm flex items-center gap-2 text-gray-500 hover:text-gray-700"
+          >
+            <FiUsers /> Leaderboard
+          </button>
         </div>
 
         {/* Notification */}
@@ -548,7 +568,7 @@ const AdminDashboard = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className={`p-3 sm:p-4 rounded-md mb-4 sm:mb-6 ${
+              className={`p-3 rounded-md mb-6 ${
                 notification.type === 'error' 
                   ? 'bg-red-50 text-red-700' 
                   : 'bg-green-50 text-green-700'
@@ -559,448 +579,505 @@ const AdminDashboard = () => {
           )}
         </AnimatePresence>
 
-        {/* Create Quiz Tab */}
+        {/* Create/Edit Quiz Form */}
         {activeTab === 'create' && (
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                {editingQuiz ? <FiEdit2 className="text-blue-500" /> : <FiPlus className="text-green-500" />}
-                {editingQuiz ? 'Edit Quiz' : 'Create New Quiz'}
-              </h2>
-              {editingQuiz && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Editing: {editingQuiz.title}
-                </p>
-              )}
-            </div>
-
-            <div className="p-4 sm:p-6">
-              <form onSubmit={editingQuiz ? (e) => {
-                e.preventDefault();
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-white rounded-lg shadow-sm p-6"
+          >
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              {editingQuiz ? 'Edit Quiz' : 'Create New Quiz'}
+            </h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (editingQuiz) {
                 handleUpdateQuiz(editingQuiz.id, formData);
-              } : handleCreateQuiz} className="space-y-4 sm:space-y-6">
-                
-                {/* Basic Information */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Quiz Title *
-                    </label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={formData.title}
-                      onChange={handleInputChange}
-                      placeholder="Enter quiz title"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      required
-                    />
-                  </div>
+              } else {
+                handleCreateQuiz(e);
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Time Limit (minutes) *
-                    </label>
-                    <input
-                      type="number"
-                      name="timeLimit"
-                      value={formData.timeLimit}
-                      onChange={handleInputChange}
-                      min="1"
-                      max="300"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      required
-                    />
-                  </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  rows="3"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                ></textarea>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Time Limit (minutes)</label>
+                  <input
+                    type="number"
+                    name="timeLimit"
+                    min="1"
+                    value={formData.timeLimit}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Questions to Render</label>
+                  <input
+                    type="number"
+                    name="questionsToRender"
+                    min="1"
+                    value={formData.questionsToRender || formData.questions.length}
                     onChange={handleInputChange}
-                    placeholder="Enter quiz description"
-                    rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="All questions"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Number of questions to show per quiz attempt</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Questions to Render
-                    </label>
-                    <input
-                      type="number"
-                      name="questionsToRender"
-                      value={formData.questionsToRender}
-                      onChange={handleInputChange}
-                      placeholder="Leave empty to render all"
-                      min="1"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Status
-                    </label>
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    >
-                      <option value="draft">Draft</option>
-                      <option value="approved">Approved</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="pending">Submit for Approval</option>
+                    {editingQuiz?.status === 'approved' && <option value="approved">Approved</option>}
+                  </select>
                 </div>
+              </div>
 
-                {/* Questions Section */}
-                <div className="border-t pt-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                    <h3 className="text-lg font-medium text-gray-800">
-                      Questions ({formData.questions.length})
-                    </h3>
-                  </div>
-                  
-                  <QuestionEditor 
-                    questions={formData.questions}
-                    addQuestion={addQuestion}
-                    updateQuestion={updateQuestion}
-                    removeQuestion={removeQuestion}
-                  />
-                </div>
+              {/* Question Editor */}
+              <QuestionEditor 
+                questions={formData.questions}
+                addQuestion={addQuestion}
+                updateQuestion={updateQuestion}
+                removeQuestion={removeQuestion}
+              />
 
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t">
-                  {editingQuiz && (
-                    <button
-                      type="button"
-                      onClick={cancelEditing}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm"
-                    >
-                      Cancel Edit
-                    </button>
-                  )}
+              <div className="pt-2 flex justify-between">
+                {editingQuiz && (
                   <button
-                    type="submit"
-                    disabled={loading.action || formData.questions.length === 0}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 text-sm font-medium"
+                    type="button"
+                    onClick={cancelEditing}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel Editing
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading.action || formData.questions.length === 0}
+                  className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-50 ${
+                    editingQuiz ? 'ml-auto' : 'w-full'
+                  }`}
+                >
+                  {loading.action ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <FiSave /> {editingQuiz ? 'Update Quiz' : 'Create Quiz'}
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+
+        {/* Manage Quizzes */}
+        {activeTab === 'manage' && (
+          <div className="space-y-6">
+            {loading.quizzes ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : quizzes.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+                <p className="text-gray-500">No quizzes found</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="grid grid-cols-12 bg-gray-50 p-4 border-b border-gray-200 font-medium text-sm text-gray-500">
+                  <div className="col-span-4">Title</div>
+                  <div className="col-span-2">Status</div>
+                  <div className="col-span-2">Questions Pool</div>
+                  <div className="col-span-1">Renders</div>
+                  <div className="col-span-3">Actions</div>
+                </div>
+
+                {quizzes.map(quiz => (
+                  <motion.div 
+                    key={quiz.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="grid grid-cols-12 p-4 border-b border-gray-200 items-center hover:bg-gray-50"
+                  >
+                    <div className="col-span-4 font-medium text-gray-800">
+                      {quiz.title}
+                      <p className="text-sm text-gray-500 truncate">{quiz.description}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        quiz.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        quiz.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {quiz.status}
+                      </span>
+                    </div>
+                    <div className="col-span-2 text-gray-600">
+                      {quiz.questions?.length || 0} questions
+                    </div>
+                    <div className="col-span-1 text-gray-600 text-sm">
+                      {quiz.questionsToRender || 'All'}
+                    </div>
+                    <div className="col-span-3 flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedQuiz(quiz.id);
+                          setBulkCodes('');
+                        }}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                        title="Upload Codes"
+                      >
+                        <FiUpload size={16} />
+                      </button>
+                      <button
+                        onClick={() => startEditingQuiz(quiz)}
+                        className="p-2 text-yellow-600 hover:bg-yellow-50 rounded"
+                        title="Edit Quiz"
+                      >
+                        <FiEdit2 size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteQuiz(quiz.id)}
+                        disabled={loading.action}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                        title="Delete Quiz"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {/* Bulk Code Upload */}
+            {selectedQuiz && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="bg-white rounded-lg shadow-sm p-6"
+              >
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <FiUpload /> Upload Access Codes
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Paste codes below (one per line or separated by spaces)
+                </p>
+                <textarea
+                  value={bulkCodes}
+                  onChange={(e) => setBulkCodes(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                  rows="6"
+                  placeholder="CODE1 CODE2 CODE3..."
+                ></textarea>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setSelectedQuiz(null);
+                      setBulkCodes('');
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleBulkUploadCodes}
+                    disabled={!bulkCodes.trim() || loading.action}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-2 disabled:opacity-50"
                   >
                     {loading.action ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        {editingQuiz ? 'Updating...' : 'Creating...'}
+                        <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Uploading...
                       </>
                     ) : (
                       <>
-                        <FiSave size={16} />
-                        {editingQuiz ? 'Update Quiz' : 'Create Quiz'}
+                        <FiUpload /> Upload Codes
                       </>
                     )}
                   </button>
                 </div>
-              </form>
+              </motion.div>
+            )}
+
+
+                      </div>
+          )}
+
+        {/* Quiz Results Tab */}
+        {activeTab === 'results' && (
+          <div className="space-y-6">
+            {/* Quiz Selection for Results */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">Select Quiz to View Results</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {quizzes.map(quiz => (
+                  <motion.div
+                    key={quiz.id}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setSelectedQuiz(quiz.id);
+                      fetchResults(quiz.id);
+                    }}
+                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                      selectedQuiz === quiz.id 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <h3 className="font-medium text-gray-800">{quiz.title}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{quiz.description}</p>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        quiz.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        quiz.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {quiz.status}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {quiz.questions?.length || 0} questions
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
+
+            {/* Results Display */}
+            {selectedQuiz && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                      <FiBarChart2 /> Results for: {quizzes.find(q => q.id === selectedQuiz)?.title}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Total Submissions: {results.length}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <CSVLink 
+                      data={results.map(result => ({
+                        'Registration Number': result.regNumber,
+                        'Full Name': result.fullName,
+                        'Department': result.department,
+                        'Email': result.email,
+                        'Score': result.score,
+                        'Total': result.total,
+                        'Percentage': result.percentage + '%',
+                        'Time Spent (mins)': Math.round((result.timeSpent || 0) / 60),
+                        'Submitted At': result.timestamp,
+                        'Quiz Title': result.quizTitle
+                      }))}
+                      filename={`quiz-results-${quizzes.find(q => q.id === selectedQuiz)?.title}-${new Date().toISOString().split('T')[0]}.csv`}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg transition-colors"
+                    >
+                      <FiDownload /> Export CSV
+                    </CSVLink>
+                    <button
+                      onClick={() => clearResults(selectedQuiz)}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg transition-colors"
+                    >
+                      <FiTrash2 /> Clear All Results
+                    </button>
+                  </div>
+                </div>
+
+                {loading.results ? (
+                  <div className="flex justify-center py-8">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                      <p className="text-gray-600">Loading results...</p>
+                    </div>
+                  </div>
+                ) : results.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FiBarChart2 className="mx-auto text-4xl text-gray-400 mb-4" />
+                    <p className="text-gray-500">No submissions found for this quiz</p>
+                    <p className="text-sm text-gray-400 mt-2">Results will appear here when students submit the quiz</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Student Details
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Registration Number
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Department
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Score
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Percentage
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Time Spent
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Submitted At
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {results.map((result, index) => (
+                          <tr key={result.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                {result.fullName || 'Unknown'}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {result.email || 'No email'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                result.regNumber === 'Anonymous' 
+                                  ? 'bg-red-100 text-red-800' 
+                                  : 'bg-green-100 text-green-800'
+                              }`}>
+                                {result.regNumber || 'Anonymous'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {result.department || 'Unknown'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <span className="text-gray-900">{result.score}</span>
+                              <span className="text-gray-500"> / {result.total}</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="flex-1">
+                                  <div className={`h-2 rounded-full mr-2 ${
+                                    (result.percentage || 0) >= 70 ? 'bg-green-200' :
+                                    (result.percentage || 0) >= 50 ? 'bg-yellow-200' : 'bg-red-200'
+                                  }`}>
+                                    <div 
+                                      className={`h-2 rounded-full ${
+                                        (result.percentage || 0) >= 70 ? 'bg-green-500' :
+                                        (result.percentage || 0) >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                                      }`}
+                                      style={{ width: `${Math.min(result.percentage || 0, 100)}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                                <span className="text-sm font-medium text-gray-900 ml-2">
+                                  {result.percentage || 0}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {result.timeSpent ? `${Math.round(result.timeSpent / 60)} mins` : 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {result.timestamp || 'Unknown'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Manage Quizzes Tab */}
-        {activeTab === 'manage' && (
-          <div className="space-y-4 sm:space-y-6">
-            {/* Quiz List */}
-            <div className="bg-white rounded-lg shadow-sm">
-              <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <FiList className="text-blue-500" />
-                  My Quizzes ({quizzes.length})
-                </h2>
-              </div>
-
-              {loading.quizzes ? (
-                <div className="p-6 sm:p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <p className="text-gray-600 text-sm">Loading quizzes...</p>
-                </div>
-              ) : quizzes.length === 0 ? (
-                <div className="p-6 sm:p-8 text-center">
-                  <FiBook className="mx-auto text-4xl text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-700 mb-2">No Quizzes Yet</h3>
-                  <p className="text-gray-500 text-sm mb-4">Create your first quiz to get started!</p>
-                  <button
-                    onClick={() => setActiveTab('create')}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
-                  >
-                    Create Quiz
-                  </button>
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-100">
-                  {quizzes.map((quiz) => (
-                    <div key={quiz.id} className="p-4 sm:p-6 hover:bg-gray-50">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                            <h3 className="font-semibold text-gray-900 truncate">{quiz.title}</h3>
-                            <div className="flex items-center gap-2">
-                              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                                quiz.status === 'approved' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {quiz.status}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {quiz.timeLimit} min
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {quiz.questions?.length || 0} questions
-                              </span>
-                            </div>
-                          </div>
-                          <p className="text-sm text-gray-600 line-clamp-2 mb-2">
-                            {quiz.description}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>Created: {quiz.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}</span>
-                            {quiz.updatedAt && (
-                              <span>Updated: {quiz.updatedAt?.toDate?.()?.toLocaleDateString()}</span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <button
-                            onClick={() => startEditingQuiz(quiz)}
-                            className="flex items-center justify-center gap-1 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md text-xs sm:text-sm"
-                          >
-                            <FiEdit2 size={14} />
-                            <span className="hidden sm:inline">Edit</span>
-                          </button>
-                          
-                          <button
-                            onClick={() => {
-                              setSelectedQuiz(quiz.id);
-                              setShowResults(true);
-                            }}
-                            className="flex items-center justify-center gap-1 px-3 py-2 text-green-600 hover:bg-green-50 rounded-md text-xs sm:text-sm"
-                          >
-                            <FiEye size={14} />
-                            <span className="hidden sm:inline">Results</span>
-                          </button>
-
-                          <button
-                            onClick={() => handleDeleteQuiz(quiz.id)}
-                            className="flex items-center justify-center gap-1 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md text-xs sm:text-sm"
-                          >
-                            <FiTrash2 size={14} />
-                            <span className="hidden sm:inline">Delete</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Bulk Upload Codes */}
-            {selectedQuiz && (
-              <div className="bg-white rounded-lg shadow-sm">
-                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                    <FiUpload className="text-green-500" />
-                    Upload Access Codes
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Selected Quiz: {quizzes.find(q => q.id === selectedQuiz)?.title}
-                  </p>
-                </div>
-
-                <div className="p-4 sm:p-6">
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Access Codes (one per line)
-                    </label>
-                    <textarea
-                      value={bulkCodes}
-                      onChange={(e) => setBulkCodes(e.target.value)}
-                      placeholder="Enter access codes, one per line..."
-                      rows="4"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <button
-                      onClick={handleBulkUploadCodes}
-                      disabled={loading.action || !bulkCodes.trim()}
-                      className="flex-1 sm:flex-none bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+        {/* Manage Questions */}
+        {activeTab === 'questions' && (
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              {selectedQuiz ? `Editing: ${quizzes.find(q => q.id === selectedQuiz)?.title}` : 'Select a Quiz to Edit Questions'}
+            </h2>
+            
+            {selectedQuiz ? (
+              <QuestionEditor
+                questions={quizzes.find(q => q.id === selectedQuiz)?.questions || []}
+                addQuestion={(newQuestion) => {
+                  const quiz = quizzes.find(q => q.id === selectedQuiz);
+                  const updatedQuestions = [...quiz.questions, newQuestion];
+                  handleUpdateQuiz(selectedQuiz, { questions: updatedQuestions });
+                }}
+                updateQuestion={(questionId, updates) => {
+                  const quiz = quizzes.find(q => q.id === selectedQuiz);
+                  const updatedQuestions = quiz.questions.map(q => 
+                    q.id === questionId ? { ...q, ...updates } : q
+                  );
+                  handleUpdateQuiz(selectedQuiz, { questions: updatedQuestions });
+                }}
+                removeQuestion={(questionId) => {
+                  const quiz = quizzes.find(q => q.id === selectedQuiz);
+                  const updatedQuestions = quiz.questions.filter(q => q.id !== questionId);
+                  handleUpdateQuiz(selectedQuiz, { questions: updatedQuestions });
+                }}
+              />
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <FiBook className="mx-auto text-3xl mb-2" />
+                <p>Please select a quiz from the list below to edit questions</p>
+                
+                <div className="mt-6 space-y-3 max-w-md mx-auto">
+                  {quizzes.map(quiz => (
+                    <motion.div
+                      key={quiz.id}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setSelectedQuiz(quiz.id)}
+                      className="p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
                     >
-                      {loading.action ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <FiUpload size={16} />
-                          Upload Codes
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setSelectedQuiz(null);
-                        setBulkCodes('');
-                      }}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Results Section */}
-            {showResults && selectedQuiz && (
-              <div className="bg-white rounded-lg shadow-sm">
-                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                        <FiBarChart2 className="text-blue-500" />
-                        Quiz Results
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {quizzes.find(q => q.id === selectedQuiz)?.title}
+                      <h3 className="font-medium">{quiz.title}</h3>
+                      <p className="text-sm text-gray-500">
+                        {quiz.questions?.length || 0} questions • {quiz.status}
                       </p>
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      {results.length > 0 && (
-                        <CSVLink
-                          data={results}
-                          filename={`quiz-results-${selectedQuiz}.csv`}
-                          className="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 text-xs sm:text-sm flex items-center justify-center gap-1"
-                        >
-                          <FiDownload size={14} />
-                          <span className="hidden sm:inline">Export CSV</span>
-                        </CSVLink>
-                      )}
-                      
-                      <button
-                        onClick={() => clearResults(selectedQuiz)}
-                        disabled={loading.action}
-                        className="bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 disabled:opacity-50 text-xs sm:text-sm flex items-center justify-center gap-1"
-                      >
-                        <FiTrash2 size={14} />
-                        <span className="hidden sm:inline">Clear Results</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setShowResults(false);
-                          setSelectedQuiz(null);
-                        }}
-                        className="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-xs sm:text-sm"
-                      >
-                        <FiX size={14} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 sm:p-6">
-                  {loading.results ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                      <p className="text-gray-600 text-sm">Loading results...</p>
-                    </div>
-                  ) : results.length === 0 ? (
-                    <div className="text-center py-8">
-                      <FiBarChart2 className="mx-auto text-4xl text-gray-400 mb-4" />
-                      <h4 className="text-lg font-medium text-gray-700 mb-2">No Results Yet</h4>
-                      <p className="text-gray-500 text-sm">Students haven't taken this quiz yet.</p>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Student
-                            </th>
-                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Score
-                            </th>
-                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Percentage
-                            </th>
-                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Time
-                            </th>
-                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Date
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {results.map((result, index) => (
-                            <tr key={result.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                              <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900">
-                                    {result.fullName}
-                                  </div>
-                                  <div className="text-xs text-gray-500">
-                                    {result.regNumber}
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {result.score}/{result.total}
-                              </td>
-                              <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div className="flex-1 max-w-16 sm:max-w-20">
-                                    <div className={`h-2 rounded-full mr-2 ${
-                                      result.percentage >= 70 ? 'bg-green-200' :
-                                      result.percentage >= 50 ? 'bg-yellow-200' : 'bg-red-200'
-                                    }`}>
-                                      <div 
-                                        className={`h-2 rounded-full ${
-                                          result.percentage >= 70 ? 'bg-green-500' :
-                                          result.percentage >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                                        }`}
-                                        style={{ width: `${Math.min(result.percentage, 100)}%` }}
-                                      ></div>
-                                    </div>
-                                  </div>
-                                  <span className="text-sm font-medium text-gray-900 ml-2">
-                                    {result.percentage}%
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {Math.floor(result.timeSpent / 60)}m {result.timeSpent % 60}s
-                              </td>
-                              <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {result.timestamp}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                    </motion.div>
+                  ))}
                 </div>
               </div>
             )}
@@ -1013,18 +1090,18 @@ const AdminDashboard = () => {
 
 // StatCard Component
 const StatCard = ({ icon, title, value, loading }) => (
-  <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 border border-gray-200">
-    <div className="flex items-center justify-between">
-      <div className="min-w-0">
-        <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{title}</p>
-        {loading ? (
-          <div className="h-6 sm:h-8 bg-gray-200 rounded animate-pulse mt-1"></div>
-        ) : (
-          <p className="text-lg sm:text-2xl font-bold text-gray-900">{value}</p>
-        )}
-      </div>
-      <div className="flex-shrink-0">
+  <div className="bg-white rounded-lg shadow-sm p-4">
+    <div className="flex items-center gap-3">
+      <div className="p-2 bg-gray-100 rounded-full">
         {icon}
+      </div>
+      <div>
+        <p className="text-sm text-gray-500">{title}</p>
+        {loading ? (
+          <div className="h-6 w-12 bg-gray-200 rounded mt-1 animate-pulse"></div>
+        ) : (
+          <p className="text-xl font-semibold text-gray-800">{value}</p>
+        )}
       </div>
     </div>
   </div>
