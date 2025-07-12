@@ -29,8 +29,7 @@ import {
   FiDatabase,
   FiMonitor,
   FiWifi,
-  FiServer,
-  FiBook
+  FiServer
 } from 'react-icons/fi';
 import {
   fetchPlatformStats,
@@ -327,53 +326,51 @@ export default function SuperAdminDashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
-                <FiShield className="text-red-600" size={20} />
-                <span className="hidden sm:inline">SuperAdmin Dashboard</span>
-                <span className="sm:hidden">SuperAdmin</span>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <FiShield className="text-red-600" />
+                SuperAdmin Dashboard
               </h1>
-              <p className="text-xs sm:text-base text-gray-600 mt-1">
+              <p className="text-gray-600 mt-1">
                 Global platform management and analytics
               </p>
             </div>
             
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-4">
               {/* Real-time indicator */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setRealTimeActive(!realTimeActive)}
-                  className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     realTimeActive 
                       ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   <div className={`w-2 h-2 rounded-full ${realTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                  <span className="hidden sm:inline">{realTimeActive ? 'Live' : 'Offline'}</span>
+                  {realTimeActive ? 'Live' : 'Offline'}
                 </button>
                 
                 <button
                   onClick={refreshAllData}
-                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 text-xs sm:text-sm font-medium"
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 text-sm font-medium"
                 >
-                  <FiRefreshCw size={14} />
-                  <span className="hidden sm:inline">Refresh</span>
+                  <FiRefreshCw size={16} />
+                  Refresh
                 </button>
               </div>
 
-              <span className="text-xs sm:text-sm text-gray-500 hidden md:block">
+              <span className="text-sm text-gray-500">
                 Updated: {lastUpdated.toLocaleTimeString()}
               </span>
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1 sm:gap-2 text-red-600 hover:text-red-700 text-xs sm:text-sm font-medium"
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium"
               >
-                <FiLogOut size={14} /> 
-                <span className="hidden sm:inline">Logout</span>
+                <FiLogOut /> Logout
               </button>
             </div>
           </div>
@@ -387,14 +384,14 @@ export default function SuperAdminDashboard() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-16 sm:top-20 right-4 z-50"
+            className="fixed top-20 right-4 z-50"
           >
-            <div className={`p-3 sm:p-4 rounded-lg shadow-lg max-w-sm ${
+            <div className={`p-4 rounded-lg shadow-lg ${
               notification.type === 'error' 
                 ? 'bg-red-50 text-red-700 border border-red-200' 
                 : 'bg-green-50 text-green-700 border border-green-200'
             }`}>
-              <p className="text-sm">{notification.message}</p>
+              {notification.message}
             </div>
           </motion.div>
         )}
@@ -402,43 +399,42 @@ export default function SuperAdminDashboard() {
 
       {/* Navigation */}
       <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex overflow-x-auto scrollbar-hide">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex overflow-x-auto">
             {[
-              { id: 'overview', label: 'Overview', icon: <FiMonitor size={14} /> },
-              { id: 'analytics', label: 'Analytics', icon: <FiBarChart2 size={14} /> },
-              { id: 'users', label: 'Users', icon: <FiUsers size={14} /> },
-              { id: 'quizzes', label: 'Quizzes', icon: <FiSettings size={14} /> },
-              { id: 'departments', label: 'Departments', icon: <FiGlobe size={14} /> },
-              { id: 'logs', label: 'Logs', icon: <FiActivity size={14} /> },
-              { id: 'maintenance', label: 'Maintenance', icon: <FiDatabase size={14} /> },
-              { id: 'leaderboard', label: 'Leaderboard', icon: <FiAward size={14} /> }
+              { id: 'overview', label: 'System Overview', icon: <FiMonitor /> },
+              { id: 'analytics', label: 'Analytics', icon: <FiBarChart2 /> },
+              { id: 'users', label: 'User Management', icon: <FiUsers /> },
+              { id: 'quizzes', label: 'Quiz Management', icon: <FiSettings /> },
+              { id: 'departments', label: 'Departments', icon: <FiGlobe /> },
+              { id: 'logs', label: 'Activity Logs', icon: <FiActivity /> },
+              { id: 'maintenance', label: 'Maintenance', icon: <FiDatabase /> },
+              { id: 'leaderboard', label: 'Leaderboard', icon: <FiAward /> }
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 border-b-2 transition-colors ${
+                className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap border-b-2 transition-colors ${
                   activeTab === tab.id 
                     ? 'text-blue-600 border-blue-600' 
                     : 'text-gray-500 hover:text-gray-700 border-transparent'
                 }`}
               >
-                {tab.icon} 
-                <span className="hidden sm:inline">{tab.label}</span>
+                {tab.icon} {tab.label}
               </button>
             ))}
           </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <div className="max-w-7xl mx-auto px-4 py-6">
         {/* System Overview Tab */}
         {activeTab === 'overview' && (
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-6">
             {/* System Health */}
             {platformStats && (
-              <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                     <FiHeart className="text-red-500" />
                     System Health
@@ -447,7 +443,7 @@ export default function SuperAdminDashboard() {
                     <select
                       value={selectedTimeFrame}
                       onChange={(e) => setSelectedTimeFrame(e.target.value)}
-                      className="border border-gray-300 rounded-md px-2 sm:px-3 py-1 text-xs sm:text-sm"
+                      className="border border-gray-300 rounded-md px-3 py-1 text-sm"
                     >
                       <option value={TIME_FRAMES.LAST_HOUR}>Last Hour</option>
                       <option value={TIME_FRAMES.LAST_24_HOURS}>Last 24 Hours</option>
@@ -458,9 +454,9 @@ export default function SuperAdminDashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                   <div className="text-center">
-                    <div className={`text-2xl sm:text-4xl font-bold mb-2 ${
+                    <div className={`text-4xl font-bold mb-2 ${
                       platformStats.health.status.color === 'green' ? 'text-green-600' :
                       platformStats.health.status.color === 'blue' ? 'text-blue-600' :
                       platformStats.health.status.color === 'yellow' ? 'text-yellow-600' :
@@ -469,41 +465,42 @@ export default function SuperAdminDashboard() {
                     }`}>
                       {platformStats.health.score}%
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-600">Overall Health</div>
+                    <div className="text-sm text-gray-600">Overall Health</div>
                   </div>
 
                   <div className="text-center">
-                    <div className="text-2xl sm:text-4xl font-bold text-blue-600 mb-2">{platformStats.users.total}</div>
-                    <div className="text-xs sm:text-sm text-gray-600">Total Users</div>
+                    <div className="text-4xl font-bold text-blue-600 mb-2">{platformStats.users.total}</div>
+                    <div className="text-sm text-gray-600">Total Users</div>
                   </div>
 
                   <div className="text-center">
-                    <div className="text-2xl sm:text-4xl font-bold text-green-600 mb-2">{platformStats.quizzes.total}</div>
-                    <div className="text-xs sm:text-sm text-gray-600">Total Quizzes</div>
+                    <div className="text-4xl font-bold text-green-600 mb-2">{platformStats.quizzes.total}</div>
+                    <div className="text-sm text-gray-600">Total Quizzes</div>
                   </div>
 
                   <div className="text-center">
-                    <div className="text-2xl sm:text-4xl font-bold text-purple-600 mb-2">{platformStats.submissions.total}</div>
-                    <div className="text-xs sm:text-sm text-gray-600">Total Submissions</div>
+                    <div className="text-4xl font-bold text-purple-600 mb-2">{platformStats.submissions.total}</div>
+                    <div className="text-sm text-gray-600">Total Submissions</div>
                   </div>
                 </div>
 
                 {/* Health Factors */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {Object.entries(platformStats.health.factors).map(([factor, score]) => (
-                    <div key={factor} className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                    <div key={factor} className="bg-gray-50 rounded-lg p-4">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs sm:text-sm font-medium text-gray-700 capitalize">
+                        <span className="text-sm font-medium text-gray-700 capitalize">
                           {factor.replace(/([A-Z])/g, ' $1').trim()}
                         </span>
-                        <span className="text-xs sm:text-sm font-bold text-gray-900">{Math.round(score)}%</span>
+                        <span className="text-sm font-bold text-gray-900">{Math.round(score)}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full transition-all duration-300 ${
                             score >= 80 ? 'bg-green-500' :
-                            score >= 60 ? 'bg-yellow-500' :
-                            score >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                            score >= 60 ? 'bg-blue-500' :
+                            score >= 40 ? 'bg-yellow-500' :
+                            score >= 20 ? 'bg-orange-500' : 'bg-red-500'
                           }`}
                           style={{ width: `${Math.min(score, 100)}%` }}
                         />
@@ -514,109 +511,98 @@ export default function SuperAdminDashboard() {
               </div>
             )}
 
-            {/* Quick Stats Grid */}
-            {platformStats && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-                <StatCard
-                  title="Active Users"
-                  value={platformStats.users.active}
-                  icon={<FiUsers className="text-blue-500" size={16} />}
-                  trend={platformStats.users.growth}
-                />
-                <StatCard
-                  title="New Users"
-                  value={platformStats.users.new}
-                  icon={<FiTrendingUp className="text-green-500" size={16} />}
-                  trend={platformStats.users.newGrowth}
-                />
-                <StatCard
-                  title="Active Quizzes"
-                  value={platformStats.quizzes.active}
-                  icon={<FiCheckCircle className="text-green-500" size={16} />}
-                />
-                <StatCard
-                  title="Pending"
-                  value={platformStats.quizzes.pending}
-                  icon={<FiClock className="text-yellow-500" size={16} />}
-                />
-                <StatCard
-                  title="Today's Subs"
-                  value={platformStats.submissions.today}
-                  icon={<FiZap className="text-purple-500" size={16} />}
-                />
-                <StatCard
-                  title="Avg Score"
-                  value={`${platformStats.submissions.averageScore}%`}
-                  icon={<FiAward className="text-orange-500" size={16} />}
-                />
-              </div>
-            )}
-
-            {/* Recent Activity */}
-            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <FiActivity className="text-green-500" />
-                Recent Activity
-              </h3>
-              
-              {activityLogs.length === 0 ? (
-                <div className="text-center py-6 sm:py-8 text-gray-500">
-                  <FiActivity className="mx-auto text-4xl mb-4 opacity-50" />
-                  <p className="text-sm">No recent activity to display</p>
-                </div>
-              ) : (
+            {/* Recent Alerts */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <FiAlertTriangle className="text-yellow-500" />
+                System Alerts ({systemAlerts.length})
+              </h2>
+              {systemAlerts.length > 0 ? (
                 <div className="space-y-3">
-                  {activityLogs.slice(0, 5).map((log, index) => (
-                    <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                      <div className={`p-1 rounded-full ${
-                        log.type === 'user' ? 'bg-blue-100' :
-                        log.type === 'quiz' ? 'bg-green-100' :
-                        log.type === 'system' ? 'bg-purple-100' : 'bg-gray-100'
-                      }`}>
-                        {log.type === 'user' ? <FiUsers size={12} /> :
-                         log.type === 'quiz' ? <FiBook size={12} /> :
-                         log.type === 'system' ? <FiSettings size={12} /> : <FiActivity size={12} />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-900">{log.message}</p>
-                        <p className="text-xs text-gray-500">{log.timestamp?.toLocaleString() || 'Unknown time'}</p>
+                  {systemAlerts.slice(0, 5).map(alert => (
+                    <div key={alert.id} className={`p-3 rounded-lg border-l-4 ${
+                      alert.severity === 'high' ? 'bg-red-50 border-red-500' :
+                      alert.severity === 'medium' ? 'bg-yellow-50 border-yellow-500' :
+                      'bg-blue-50 border-blue-500'
+                    }`}>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium text-gray-900 flex items-center gap-2">
+                            <span>{alert.icon}</span>
+                            {alert.title}
+                          </div>
+                          <div className="text-sm text-gray-600 mt-1">{alert.message}</div>
+                        </div>
+                        <span className="text-xs text-gray-500">{alert.timestamp.toLocaleTimeString()}</span>
                       </div>
                     </div>
                   ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-4">
+                  <FiCheckCircle className="mx-auto text-4xl mb-2 text-green-500" />
+                  <p>No system alerts - everything is running smoothly!</p>
                 </div>
               )}
             </div>
 
-            {/* System Alerts */}
-            {systemAlerts.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <FiAlertTriangle className="text-red-500" />
-                  System Alerts ({systemAlerts.length})
-                </h3>
-                
-                <div className="space-y-3">
-                  {systemAlerts.map((alert, index) => (
-                    <div key={index} className={`p-3 sm:p-4 rounded-lg border-l-4 ${
-                      alert.severity === 'critical' ? 'bg-red-50 border-red-500' :
-                      alert.severity === 'warning' ? 'bg-yellow-50 border-yellow-500' :
-                      'bg-blue-50 border-blue-500'
-                    }`}>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">{alert.title}</h4>
-                          <p className="text-xs sm:text-sm text-gray-600 mt-1">{alert.message}</p>
-                        </div>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                          alert.severity === 'critical' ? 'bg-red-100 text-red-800' :
-                          alert.severity === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-blue-100 text-blue-800'
-                        }`}>
-                          {alert.severity}
-                        </span>
-                      </div>
+            {/* Quick Stats Grid */}
+            {platformStats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">User Distribution</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Students</span>
+                      <span className="font-semibold">{platformStats.users.byRole.students?.length || 0}</span>
                     </div>
-                  ))}
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Admins</span>
+                      <span className="font-semibold">{platformStats.users.byRole.admins?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">SuperAdmins</span>
+                      <span className="font-semibold">{platformStats.users.byRole.superAdmins?.length || 0}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Quiz Status</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Approved</span>
+                      <span className="font-semibold text-green-600">{platformStats.quizzes.byStatus.approved?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Pending</span>
+                      <span className="font-semibold text-yellow-600">{platformStats.quizzes.byStatus.pending?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Draft</span>
+                      <span className="font-semibold text-gray-600">{platformStats.quizzes.byStatus.draft?.length || 0}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Activity Metrics</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Avg per Quiz</span>
+                      <span className="font-semibold">{platformStats.submissions.averagePerQuiz}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Avg per User</span>
+                      <span className="font-semibold">{platformStats.submissions.averagePerUser}</span>
+                    </div>
+                    {platformStats.submissions.recent !== null && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Recent Activity</span>
+                        <span className="font-semibold text-blue-600">{platformStats.submissions.recent}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -625,436 +611,632 @@ export default function SuperAdminDashboard() {
 
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
-          <div className="space-y-4 sm:space-y-6">
-            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <FiBarChart2 className="text-blue-500" />
-                Platform Analytics
-              </h2>
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-6">Platform Analytics</h2>
               
-              {/* Department Analytics */}
-              {departmentAnalytics.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Department
-                        </th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Users
-                        </th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Quizzes
-                        </th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Avg Score
-                        </th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Activity
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {departmentAnalytics.map((dept, index) => (
-                        <tr key={dept.name} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{dept.name}</div>
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {dept.totalUsers}
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {dept.totalQuizzes}
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-1 max-w-16 sm:max-w-20">
-                                <div className="h-2 bg-gray-200 rounded-full mr-2">
-                                  <div 
-                                    className={`h-2 rounded-full ${
-                                      dept.averageScore >= 70 ? 'bg-green-500' :
-                                      dept.averageScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                                    }`}
-                                    style={{ width: `${Math.min(dept.averageScore, 100)}%` }}
-                                  />
-                                </div>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900 ml-2">
-                                {dept.averageScore}%
-                              </span>
+              {platformStats ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Department Distribution */}
+                  <div>
+                    <h3 className="font-medium text-gray-800 mb-4">Users by Department</h3>
+                    <div className="space-y-3">
+                      {Object.entries(platformStats.users.byDepartment).map(([dept, count]) => (
+                        <div key={dept} className="flex justify-between items-center">
+                          <span className="text-gray-600">{dept}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${(count / platformStats.users.total) * 100}%` }}
+                              />
                             </div>
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                              dept.activityLevel === 'high' ? 'bg-green-100 text-green-800' :
-                              dept.activityLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {dept.activityLevel}
-                            </span>
-                          </td>
-                        </tr>
+                            <span className="font-semibold w-8 text-right">{count}</span>
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
+                    </div>
+                  </div>
+
+                  {/* Quiz Distribution */}
+                  <div>
+                    <h3 className="font-medium text-gray-800 mb-4">Quizzes by Department</h3>
+                    <div className="space-y-3">
+                      {Object.entries(platformStats.quizzes.byDepartment).map(([dept, count]) => (
+                        <div key={dept} className="flex justify-between items-center">
+                          <span className="text-gray-600">{dept}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${(count / platformStats.quizzes.total) * 100}%` }}
+                              />
+                            </div>
+                            <span className="font-semibold w-8 text-right">{count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Submission Distribution */}
+                  <div>
+                    <h3 className="font-medium text-gray-800 mb-4">Submissions by Department</h3>
+                    <div className="space-y-3">
+                      {Object.entries(platformStats.submissions.byDepartment).map(([dept, count]) => (
+                        <div key={dept} className="flex justify-between items-center">
+                          <span className="text-gray-600">{dept}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-purple-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${(count / platformStats.submissions.total) * 100}%` }}
+                              />
+                            </div>
+                            <span className="font-semibold w-8 text-right">{count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Performance Trends */}
+                  <div>
+                    <h3 className="font-medium text-gray-800 mb-4">System Performance</h3>
+                    <div className="space-y-4">
+                      <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-700">System Health</span>
+                          <span className={`font-bold ${
+                            platformStats.health.status.color === 'green' ? 'text-green-600' :
+                            platformStats.health.status.color === 'blue' ? 'text-blue-600' :
+                            platformStats.health.status.color === 'yellow' ? 'text-yellow-600' :
+                            platformStats.health.status.color === 'orange' ? 'text-orange-600' :
+                            'text-red-600'
+                          }`}>
+                            {platformStats.health.status.label}
+                          </span>
+                        </div>
+                        <div className="mt-2">
+                          <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div 
+                              className={`h-3 rounded-full transition-all duration-500 ${
+                                platformStats.health.status.color === 'green' ? 'bg-green-500' :
+                                platformStats.health.status.color === 'blue' ? 'bg-blue-500' :
+                                platformStats.health.status.color === 'yellow' ? 'bg-yellow-500' :
+                                platformStats.health.status.color === 'orange' ? 'bg-orange-500' :
+                                'bg-red-500'
+                              }`}
+                              style={{ width: `${platformStats.health.score}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : (
-                <div className="text-center py-6 sm:py-8 text-gray-500">
-                  <FiBarChart2 className="mx-auto text-4xl mb-4 opacity-50" />
-                  <p className="text-sm">No analytics data available</p>
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* User Management Tab */}
-        {activeTab === 'users' && (
-          <div className="space-y-4 sm:space-y-6">
-            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-                <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <FiUsers className="text-blue-500" />
-                  User Management ({allUsers.length})
-                </h2>
+        {/* Leaderboard Tab */}
+        {activeTab === 'leaderboard' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center justify-between mb-6">
+                                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                   <FiAward className="text-yellow-500" />
+                   Global Leaderboard Management
+                 </h2>
+                <button
+                  onClick={() => navigate('/leaderboard')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  View Full Leaderboard
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                  <h3 className="font-semibold text-gray-800 mb-2">Top Performers</h3>
+                  <p className="text-2xl font-bold text-yellow-600">View Rankings</p>
+                  <p className="text-sm text-gray-600">Monitor student performance across all departments</p>
+                </div>
                 
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="text"
-                    placeholder="Search users..."
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  />
-                  <select className="px-3 py-2 border border-gray-300 rounded-md text-sm">
-                    <option value="">All Roles</option>
-                    <option value="student">Students</option>
-                    <option value="admin">Admins</option>
-                    <option value="superadmin">SuperAdmins</option>
-                  </select>
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                  <h3 className="font-semibold text-gray-800 mb-2">Competition Stats</h3>
+                  <p className="text-2xl font-bold text-blue-600">Real-time</p>
+                  <p className="text-sm text-gray-600">Track competitive engagement metrics</p>
                 </div>
-              </div>
-
-              {allUsers.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          User
-                        </th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Role
-                        </th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Department
-                        </th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Joined
-                        </th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {allUsers.slice(0, 20).map((user, index) => (
-                        <tr key={user.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {user.fullName || 'Unknown'}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {user.email}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                              user.role === 'superadmin' ? 'bg-red-100 text-red-800' :
-                              user.role === 'admin' ? 'bg-blue-100 text-blue-800' :
-                              'bg-green-100 text-green-800'
-                            }`}>
-                              {user.role}
-                            </span>
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {user.department || 'N/A'}
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {user.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                            <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
-                              <button
-                                onClick={() => setSelectedUser(user)}
-                                className="text-blue-600 hover:bg-blue-50 p-1 rounded text-xs"
-                              >
-                                <FiEye size={14} />
-                              </button>
-                              <button
-                                onClick={() => setSelectedUser(user)}
-                                className="text-yellow-600 hover:bg-yellow-50 p-1 rounded text-xs"
-                              >
-                                <FiEdit2 size={14} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteUser(user.id)}
-                                className="text-red-600 hover:bg-red-50 p-1 rounded text-xs"
-                              >
-                                <FiTrash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-center py-6 sm:py-8 text-gray-500">
-                  <FiUsers className="mx-auto text-4xl mb-4 opacity-50" />
-                  <p className="text-sm">No users found</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Quiz Management Tab */}
-        {activeTab === 'quizzes' && (
-          <div className="space-y-4 sm:space-y-6">
-            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-                <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <FiSettings className="text-green-500" />
-                  Quiz Management ({allQuizzes.length})
-                </h2>
                 
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="text"
-                    placeholder="Search quizzes..."
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  />
-                  <select className="px-3 py-2 border border-gray-300 rounded-md text-sm">
-                    <option value="">All Status</option>
-                    <option value="approved">Approved</option>
-                    <option value="pending">Pending</option>
-                    <option value="draft">Draft</option>
-                  </select>
+                <div className="p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-lg border border-green-200">
+                  <h3 className="font-semibold text-gray-800 mb-2">Achievement System</h3>
+                  <p className="text-2xl font-bold text-green-600">Active</p>
+                  <p className="text-sm text-gray-600">Streaks, points, and performance tracking</p>
                 </div>
               </div>
-
-              {allQuizzes.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Quiz
-                        </th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Department
-                        </th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Questions
-                        </th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {allQuizzes.slice(0, 20).map((quiz, index) => (
-                        <tr key={quiz.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900 truncate max-w-32 sm:max-w-none">
-                                {quiz.title}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {quiz.timeLimit} minutes
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                              quiz.status === 'approved' ? 'bg-green-100 text-green-800' :
-                              quiz.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {quiz.status}
-                            </span>
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {quiz.department}
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {quiz.questions?.length || 0}
-                          </td>
-                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                            <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
-                              <button
-                                onClick={() => setSelectedQuiz(quiz)}
-                                className="text-blue-600 hover:bg-blue-50 p-1 rounded text-xs"
-                              >
-                                <FiEye size={14} />
-                              </button>
-                              <button
-                                onClick={() => handleUpdateQuizStatus(quiz.id, 'approved')}
-                                className="text-green-600 hover:bg-green-50 p-1 rounded text-xs"
-                              >
-                                <FiCheckCircle size={14} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteQuiz(quiz.id)}
-                                className="text-red-600 hover:bg-red-50 p-1 rounded text-xs"
-                              >
-                                <FiTrash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-center py-6 sm:py-8 text-gray-500">
-                  <FiSettings className="mx-auto text-4xl mb-4 opacity-50" />
-                  <p className="text-sm">No quizzes found</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Maintenance Tab */}
-        {activeTab === 'maintenance' && (
-          <div className="space-y-4 sm:space-y-6">
-            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2">
-                <FiDatabase className="text-purple-500" />
-                System Maintenance
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {/* System Backup */}
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center gap-3 mb-3">
-                    <FiDownload className="text-blue-500" size={20} />
-                    <h3 className="font-medium text-gray-900">System Backup</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Create a complete backup of all system data including users, quizzes, and submissions.
-                  </p>
-                  <button
-                    onClick={handleSystemBackup}
-                    disabled={loading.backup}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
-                  >
-                    {loading.backup ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Creating Backup...
-                      </>
-                    ) : (
-                      <>
-                        <FiDownload size={16} />
-                        Create Backup
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Real-time Monitoring */}
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center gap-3 mb-3">
-                    <FiMonitor className="text-green-500" size={20} />
-                    <h3 className="font-medium text-gray-900">Real-time Monitoring</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Monitor system performance and user activity in real-time.
-                  </p>
-                  <button
-                    onClick={() => setRealTimeActive(!realTimeActive)}
-                    className={`w-full px-4 py-2 rounded-md text-sm font-medium ${
-                      realTimeActive 
-                        ? 'bg-green-600 text-white hover:bg-green-700' 
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    {realTimeActive ? 'Stop Monitoring' : 'Start Monitoring'}
-                  </button>
-                </div>
-
-                {/* System Health Check */}
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center gap-3 mb-3">
-                    <FiHeart className="text-red-500" size={20} />
-                    <h3 className="font-medium text-gray-900">Health Check</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Run a comprehensive system health check and diagnostics.
-                  </p>
-                  <button
-                    onClick={refreshAllData}
-                    className="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center gap-2 text-sm"
-                  >
-                    <FiRefreshCw size={16} />
-                    Run Health Check
-                  </button>
-                </div>
+              
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <p className="text-center text-gray-600">
+                  🏆 Advanced leaderboard features include departmental rankings, global competition, streak tracking, and performance analytics.
+                  <br />
+                  <span className="text-sm text-gray-500">Click "View Full Leaderboard" to access the complete ranking system.</span>
+                </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Other tabs can be implemented similarly with mobile-first responsive design */}
-        {/* For brevity, I'm showing the pattern for the remaining tabs */}
-        {(activeTab === 'departments' || activeTab === 'logs' || activeTab === 'leaderboard') && (
-          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              {activeTab === 'departments' && <FiGlobe className="text-blue-500" />}
-              {activeTab === 'logs' && <FiActivity className="text-green-500" />}
-              {activeTab === 'leaderboard' && <FiAward className="text-yellow-500" />}
-              {activeTab === 'departments' && 'Department Management'}
-              {activeTab === 'logs' && 'Activity Logs'}
-              {activeTab === 'leaderboard' && 'Global Leaderboard'}
-            </h2>
-            <div className="text-center py-6 sm:py-8 text-gray-500">
-              <p className="text-sm">This section is under development</p>
-              <p className="text-xs mt-2">Feature will be available in the next update</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+                 {/* User Management Tab */}
+         {activeTab === 'users' && (
+           <div className="space-y-6">
+             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+               <div className="p-6 border-b border-gray-200">
+                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                   <FiUsers className="text-blue-500" />
+                   User Management ({allUsers.length} users)
+                 </h2>
+               </div>
+               
+               <div className="overflow-x-auto">
+                 <table className="min-w-full divide-y divide-gray-200">
+                   <thead className="bg-gray-50">
+                     <tr>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                     </tr>
+                   </thead>
+                   <tbody className="bg-white divide-y divide-gray-200">
+                     {allUsers.slice(0, 20).map(user => (
+                       <tr key={user.id} className="hover:bg-gray-50">
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           <div>
+                             <div className="text-sm font-medium text-gray-900">{user.fullName || 'N/A'}</div>
+                             <div className="text-sm text-gray-500">{user.email}</div>
+                             <div className="text-xs text-gray-400">{user.regNumber || 'No reg number'}</div>
+                           </div>
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                           {user.department || 'N/A'}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           <select
+                             value={user.role || 'student'}
+                             onChange={(e) => handleUpdateUserRole(user.id, e.target.value)}
+                             className="text-sm border border-gray-300 rounded px-2 py-1"
+                           >
+                             <option value="student">Student</option>
+                             <option value="admin">Admin</option>
+                             <option value="superadmin">SuperAdmin</option>
+                           </select>
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                           {user.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                           <div className="flex items-center gap-2">
+                             <button
+                               onClick={() => setSelectedUser(user)}
+                               className="text-blue-600 hover:text-blue-900 p-1"
+                               title="View Details"
+                             >
+                               <FiEye size={16} />
+                             </button>
+                             <button
+                               onClick={() => handleDeleteUser(user.id)}
+                               className="text-red-600 hover:text-red-900 p-1"
+                               title="Delete User"
+                             >
+                               <FiTrash2 size={16} />
+                             </button>
+                           </div>
+                         </td>
+                       </tr>
+                     ))}
+                   </tbody>
+                 </table>
+               </div>
+               
+               {allUsers.length > 20 && (
+                 <div className="p-4 text-center text-gray-500 border-t">
+                   Showing first 20 of {allUsers.length} users
+                 </div>
+               )}
+             </div>
+           </div>
+         )}
 
-// StatCard Component
-const StatCard = ({ title, value, icon, trend }) => (
-  <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 border border-gray-200">
-    <div className="flex items-center justify-between mb-2">
-      <div className="flex-shrink-0">
-        {icon}
-      </div>
-      {trend && (
-        <span className={`text-xs font-medium ${
-          trend > 0 ? 'text-green-600' : trend < 0 ? 'text-red-600' : 'text-gray-600'
-        }`}>
-          {trend > 0 ? '+' : ''}{trend}%
-        </span>
-      )}
-    </div>
-    <div>
-      <p className="text-lg sm:text-2xl font-bold text-gray-900">{value}</p>
-      <p className="text-xs sm:text-sm text-gray-600 truncate">{title}</p>
-    </div>
-  </div>
-);
+         {/* Quiz Management Tab */}
+         {activeTab === 'quizzes' && (
+           <div className="space-y-6">
+             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+               <div className="p-6 border-b border-gray-200">
+                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                   <FiSettings className="text-green-500" />
+                   Quiz Management ({allQuizzes.length} quizzes)
+                 </h2>
+               </div>
+               
+               <div className="overflow-x-auto">
+                 <table className="min-w-full divide-y divide-gray-200">
+                   <thead className="bg-gray-50">
+                     <tr>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quiz</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                     </tr>
+                   </thead>
+                   <tbody className="bg-white divide-y divide-gray-200">
+                     {allQuizzes.slice(0, 20).map(quiz => (
+                       <tr key={quiz.id} className="hover:bg-gray-50">
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           <div>
+                             <div className="text-sm font-medium text-gray-900">{quiz.title}</div>
+                             <div className="text-sm text-gray-500">{quiz.description?.substring(0, 60)}...</div>
+                             <div className="text-xs text-gray-400">{quiz.questions?.length || 0} questions</div>
+                           </div>
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                           {quiz.department}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           <select
+                             value={quiz.status}
+                             onChange={(e) => handleUpdateQuizStatus(quiz.id, e.target.value)}
+                             className={`text-sm border rounded px-2 py-1 ${
+                               quiz.status === 'approved' ? 'border-green-300 bg-green-50' :
+                               quiz.status === 'pending' ? 'border-yellow-300 bg-yellow-50' :
+                               'border-gray-300 bg-gray-50'
+                             }`}
+                           >
+                             <option value="draft">Draft</option>
+                             <option value="pending">Pending</option>
+                             <option value="approved">Approved</option>
+                           </select>
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                           {quiz.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                           <div className="flex items-center gap-2">
+                             <button
+                               onClick={() => setSelectedQuiz(quiz)}
+                               className="text-blue-600 hover:text-blue-900 p-1"
+                               title="View Details"
+                             >
+                               <FiEye size={16} />
+                             </button>
+                             <button
+                               onClick={() => handleDeleteQuiz(quiz.id)}
+                               className="text-red-600 hover:text-red-900 p-1"
+                               title="Delete Quiz"
+                             >
+                               <FiTrash2 size={16} />
+                             </button>
+                           </div>
+                         </td>
+                       </tr>
+                     ))}
+                   </tbody>
+                 </table>
+               </div>
+               
+               {allQuizzes.length > 20 && (
+                 <div className="p-4 text-center text-gray-500 border-t">
+                   Showing first 20 of {allQuizzes.length} quizzes
+                 </div>
+               )}
+             </div>
+           </div>
+         )}
+
+         {/* Activity Logs Tab */}
+         {activeTab === 'logs' && (
+           <div className="space-y-6">
+             <div className="bg-white rounded-lg shadow-sm p-6">
+               <div className="flex items-center justify-between mb-6">
+                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                   <FiActivity className="text-purple-500" />
+                   Activity Logs ({activityLogs.length} recent activities)
+                 </h2>
+                 <button
+                   onClick={loadActivityLogs}
+                   className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 text-sm"
+                 >
+                   <FiRefreshCw size={16} />
+                   Refresh Logs
+                 </button>
+               </div>
+               
+               {loading.logs ? (
+                 <div className="flex justify-center py-8">
+                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                 </div>
+               ) : activityLogs.length > 0 ? (
+                 <div className="space-y-3 max-h-96 overflow-y-auto">
+                   {activityLogs.map(log => (
+                     <div key={log.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                       <div className="flex justify-between items-start">
+                         <div className="flex-1">
+                           <div className="flex items-center gap-2 mb-2">
+                             <span className="text-lg">{log.icon}</span>
+                             <span className="font-medium text-gray-900">{log.action}</span>
+                             <span className={`px-2 py-1 rounded-full text-xs ${
+                               log.severity === 'info' ? 'bg-blue-100 text-blue-800' :
+                               log.severity === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                               'bg-red-100 text-red-800'
+                             }`}>
+                               {log.severity}
+                             </span>
+                           </div>
+                           <div className="text-sm text-gray-600 mb-2">
+                             <strong>{log.user.name}</strong> ({log.user.regNumber}) - {log.user.department}
+                           </div>
+                           <div className="text-sm text-gray-500">
+                             Quiz: <strong>{log.quiz.title}</strong> ({log.quiz.department})
+                           </div>
+                           {log.details && (
+                             <div className="text-xs text-gray-400 mt-1">
+                               Score: {log.details.score}/{log.details.total} ({log.details.percentage}%) 
+                               • Time: {Math.round((log.details.timeSpent || 0) / 60)} mins
+                             </div>
+                           )}
+                         </div>
+                         <div className="text-xs text-gray-500 ml-4">
+                           {log.timestamp.toLocaleString()}
+                         </div>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               ) : (
+                 <div className="text-center text-gray-500 py-8">
+                   <FiActivity className="mx-auto text-4xl mb-4 opacity-50" />
+                   <p>No activity logs found</p>
+                 </div>
+               )}
+             </div>
+           </div>
+         )}
+
+         {/* Departments Tab */}
+         {activeTab === 'departments' && (
+           <div className="space-y-6">
+             <div className="bg-white rounded-lg shadow-sm p-6">
+               <h2 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                 <FiGlobe className="text-indigo-500" />
+                 Department Analytics
+               </h2>
+               
+               {loading.departments ? (
+                 <div className="flex justify-center py-8">
+                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                 </div>
+               ) : departmentAnalytics.length > 0 ? (
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                   {departmentAnalytics.map(dept => (
+                     <div key={dept.name} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                       <div className="flex justify-between items-start mb-4">
+                         <h3 className="font-semibold text-gray-900">{dept.name}</h3>
+                         <span className={`text-xs px-2 py-1 rounded-full ${
+                           dept.healthScore >= 80 ? 'bg-green-100 text-green-800' :
+                           dept.healthScore >= 60 ? 'bg-blue-100 text-blue-800' :
+                           dept.healthScore >= 40 ? 'bg-yellow-100 text-yellow-800' :
+                           'bg-red-100 text-red-800'
+                         }`}>
+                           {Math.round(dept.healthScore)}% Health
+                         </span>
+                       </div>
+                       
+                       <div className="space-y-3">
+                         <div className="flex justify-between">
+                           <span className="text-gray-600">Total Users</span>
+                           <span className="font-semibold">{dept.users.total}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span className="text-gray-600">Students</span>
+                           <span className="font-semibold text-blue-600">{dept.users.students}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span className="text-gray-600">Admins</span>
+                           <span className="font-semibold text-green-600">{dept.users.admins}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span className="text-gray-600">Quizzes</span>
+                           <span className="font-semibold">{dept.quizzes.total}</span>
+                         </div>
+                         <div className="flex justify-between">
+                           <span className="text-gray-600">Submissions</span>
+                           <span className="font-semibold text-purple-600">{dept.submissions.total}</span>
+                         </div>
+                         {dept.submissions.averageScore > 0 && (
+                           <div className="flex justify-between">
+                             <span className="text-gray-600">Avg Score</span>
+                             <span className="font-semibold text-orange-600">{Math.round(dept.submissions.averageScore)}%</span>
+                           </div>
+                         )}
+                       </div>
+                       
+                       <div className="mt-4 pt-4 border-t border-gray-200">
+                         <div className="w-full bg-gray-200 rounded-full h-2">
+                           <div 
+                             className={`h-2 rounded-full transition-all duration-300 ${
+                               dept.healthScore >= 80 ? 'bg-green-500' :
+                               dept.healthScore >= 60 ? 'bg-blue-500' :
+                               dept.healthScore >= 40 ? 'bg-yellow-500' :
+                               'bg-red-500'
+                             }`}
+                             style={{ width: `${dept.healthScore}%` }}
+                           />
+                         </div>
+                         <div className="text-xs text-gray-500 mt-1">Department Health Score</div>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               ) : (
+                 <div className="text-center text-gray-500 py-8">
+                   <FiGlobe className="mx-auto text-4xl mb-4 opacity-50" />
+                   <p>No department data available</p>
+                 </div>
+               )}
+             </div>
+           </div>
+         )}
+
+         {/* Maintenance Tab */}
+         {activeTab === 'maintenance' && (
+           <div className="space-y-6">
+             <div className="bg-white rounded-lg shadow-sm p-6">
+               <h2 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                 <FiDatabase className="text-red-500" />
+                 System Maintenance & Backup
+               </h2>
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 {/* Backup Section */}
+                 <div className="border border-gray-200 rounded-lg p-6">
+                   <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                     <FiDownload className="text-blue-500" />
+                     System Backup
+                   </h3>
+                   <p className="text-gray-600 text-sm mb-4">
+                     Create a complete backup of all platform data including users, quizzes, submissions, and access codes.
+                   </p>
+                   <button
+                     onClick={handleSystemBackup}
+                     disabled={loading.backup}
+                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                   >
+                     {loading.backup ? (
+                       <>
+                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                         Creating Backup...
+                       </>
+                     ) : (
+                       <>
+                         <FiDownload /> Create & Download Backup
+                       </>
+                     )}
+                   </button>
+                 </div>
+
+                 {/* System Status */}
+                 <div className="border border-gray-200 rounded-lg p-6">
+                   <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                     <FiServer className="text-green-500" />
+                     System Status
+                   </h3>
+                   <div className="space-y-3">
+                     <div className="flex justify-between items-center">
+                       <span className="text-gray-600">Database</span>
+                       <span className="flex items-center gap-2 text-green-600">
+                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                         Online
+                       </span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                       <span className="text-gray-600">Authentication</span>
+                       <span className="flex items-center gap-2 text-green-600">
+                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                         Active
+                       </span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                       <span className="text-gray-600">Real-time Updates</span>
+                       <span className={`flex items-center gap-2 ${realTimeActive ? 'text-green-600' : 'text-gray-500'}`}>
+                         <div className={`w-2 h-2 rounded-full ${realTimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                         {realTimeActive ? 'Enabled' : 'Disabled'}
+                       </span>
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* Platform Stats */}
+                 <div className="border border-gray-200 rounded-lg p-6">
+                   <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                     <FiBarChart2 className="text-purple-500" />
+                     Platform Metrics
+                   </h3>
+                   {platformStats && (
+                     <div className="space-y-3">
+                       <div className="flex justify-between">
+                         <span className="text-gray-600">Data Generation</span>
+                         <span className="text-sm text-gray-500">
+                           {platformStats.generatedAt.toLocaleTimeString()}
+                         </span>
+                       </div>
+                       <div className="flex justify-between">
+                         <span className="text-gray-600">Health Score</span>
+                         <span className={`font-semibold ${
+                           platformStats.health.status.color === 'green' ? 'text-green-600' :
+                           platformStats.health.status.color === 'blue' ? 'text-blue-600' :
+                           platformStats.health.status.color === 'yellow' ? 'text-yellow-600' :
+                           platformStats.health.status.color === 'orange' ? 'text-orange-600' :
+                           'text-red-600'
+                         }`}>
+                           {platformStats.health.score}%
+                         </span>
+                       </div>
+                       <div className="flex justify-between">
+                         <span className="text-gray-600">Active Period</span>
+                         <span className="text-sm text-gray-500">
+                           {platformStats.timeFrame.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                         </span>
+                       </div>
+                     </div>
+                   )}
+                 </div>
+
+                 {/* Quick Actions */}
+                 <div className="border border-gray-200 rounded-lg p-6">
+                   <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                     <FiZap className="text-yellow-500" />
+                     Quick Actions
+                   </h3>
+                   <div className="space-y-3">
+                     <button
+                       onClick={refreshAllData}
+                       className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-sm"
+                     >
+                       <FiRefreshCw size={16} />
+                       Refresh All Data
+                     </button>
+                     <button
+                       onClick={() => setRealTimeActive(!realTimeActive)}
+                       className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded text-sm ${
+                         realTimeActive 
+                           ? 'bg-red-100 hover:bg-red-200 text-red-700' 
+                           : 'bg-green-100 hover:bg-green-200 text-green-700'
+                       }`}
+                     >
+                       <FiWifi size={16} />
+                       {realTimeActive ? 'Disable' : 'Enable'} Real-time
+                     </button>
+                     <button
+                       onClick={() => navigate('/leaderboard')}
+                       className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-sm"
+                     >
+                       <FiAward size={16} />
+                       View Leaderboard
+                     </button>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </div>
+         )}
+       </div>
+     </div>
+   );
+ }
