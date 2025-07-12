@@ -12,9 +12,7 @@ import {
   FiFilter,
   FiHeart,
   FiCircle,
-  FiArrowLeft,
-  FiCrown,
-  FiTrophy
+  FiArrowLeft
 } from 'react-icons/fi';
 import { auth, db } from '../firebase/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
@@ -145,9 +143,9 @@ export default function Leaderboard() {
   // Get rank display with appropriate icon and color
   const getRankDisplay = (rank) => {
     if (rank === 1) {
-      return { icon: <FiCrown className="text-yellow-500" />, color: 'text-yellow-600 bg-yellow-50 border-yellow-200' };
+      return { icon: <FiStar className="text-yellow-500" />, color: 'text-yellow-600 bg-yellow-50 border-yellow-200' };
     } else if (rank === 2) {
-      return { icon: <FiTrophy className="text-gray-500" />, color: 'text-gray-600 bg-gray-50 border-gray-200' };
+      return { icon: <FiAward className="text-gray-500" />, color: 'text-gray-600 bg-gray-50 border-gray-200' };
     } else if (rank === 3) {
       return { icon: <FiAward className="text-orange-500" />, color: 'text-orange-600 bg-orange-50 border-orange-200' };
     } else if (rank <= 10) {
