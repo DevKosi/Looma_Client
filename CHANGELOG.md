@@ -2,6 +2,87 @@
 
 All notable changes to the Looma Quiz Platform will be documented in this file.
 
+## [1.2.0] - 2024-12-19
+
+### 🎨 Professional UI Overhaul
+- **✅ Complete Design System Redesign**: Implemented a fully professional, mobile-first UI overhaul using Poppins font
+- **✅ Enhanced Visual Design**: Applied modern design principles with gradients, shadows, and improved spacing
+- **✅ Mobile-First Responsive Design**: Optimized all pages for mobile devices with enhanced touch interactions
+- **✅ Professional Color Scheme**: Updated to use a cohesive color palette with primary, accent, and semantic colors
+- **✅ Enhanced Typography**: Implemented Poppins font family site-wide for a clean, modern look
+
+### 🚀 New Features & Enhancements
+- **✅ Leaderboard Navigation**: Leaderboard tab now opens the main leaderboard page with a visible back button
+- **✅ Timer Animation**: When only 1 minute remains, the timer changes color and subtly animates (pulse) to alert users
+- **✅ Removed Pause Timer**: Completely removed the pause timer feature from quiz pages for better user experience
+- **✅ Enhanced Interactive States**: All buttons, tabs, and links now have elegant hover, focus, and active states
+- **✅ Improved Accessibility**: Enhanced focus states and keyboard navigation throughout the application
+
+### 🎯 Page-Specific Improvements
+
+#### Splash Screen
+- **✅ Professional Background**: Added gradient backgrounds with decorative elements
+- **✅ Enhanced Animations**: Improved loading animations with staggered children and spring physics
+- **✅ Better Typography**: Implemented gradient text effects and improved text hierarchy
+- **✅ Loading Indicators**: Added animated loading dots and progress indicators
+
+#### Login Page
+- **✅ Modern Card Design**: Implemented glassmorphism effects with backdrop blur
+- **✅ Enhanced Form Elements**: Professional input fields with improved validation states
+- **✅ Better Error Handling**: Improved error message styling and user feedback
+- **✅ Responsive Layout**: Optimized for all screen sizes with better mobile experience
+
+#### Student Dashboard
+- **✅ Professional Navigation**: Redesigned tab navigation with smooth transitions
+- **✅ Enhanced Quiz Cards**: Interactive cards with hover effects and better information hierarchy
+- **✅ Improved Statistics**: Redesigned statistics cards with better visual appeal
+- **✅ Better Search & Filter**: Enhanced search functionality with improved UI
+- **✅ Profile Section**: Completely redesigned profile page with modern layout
+
+#### Quiz Page
+- **✅ Critical Timer Alert**: Timer changes color and animates when 1 minute remains
+- **✅ Removed Pause Feature**: Eliminated pause timer functionality for streamlined experience
+- **✅ Enhanced Question Interface**: Improved question display with better spacing and typography
+- **✅ Better Progress Tracking**: Enhanced progress bar and question navigation
+- **✅ Professional Modals**: Redesigned confirmation modals with better UX
+
+#### Leaderboard Page
+- **✅ Back Navigation**: Added prominent back button to return to dashboard
+- **✅ Enhanced Rankings**: Improved rank display with crown and trophy icons
+- **✅ Better Data Visualization**: Enhanced performance indicators and progress bars
+- **✅ Responsive Table**: Optimized table layout for mobile devices
+- **✅ User Highlighting**: Current user is highlighted in the leaderboard
+
+### 🎨 Design System Updates
+- **✅ Poppins Font**: Implemented Poppins font family throughout the application
+- **✅ Enhanced Color Palette**: Updated color system with semantic colors for better consistency
+- **✅ Professional Shadows**: Implemented consistent shadow system for depth and hierarchy
+- **✅ Improved Spacing**: Enhanced spacing system for better visual rhythm
+- **✅ Better Contrast**: Adjusted text/background colors for proper contrast on white backgrounds
+
+### 🔧 Technical Improvements
+- **✅ CSS Custom Properties**: Implemented consistent design tokens and variables
+- **✅ Tailwind Configuration**: Enhanced Tailwind config with custom animations and utilities
+- **✅ Animation System**: Added smooth transitions and micro-interactions
+- **✅ Performance Optimization**: Improved loading states and reduced layout shifts
+- **✅ Code Organization**: Better component structure and reusable styles
+
+### 📱 Mobile Optimizations
+- **✅ Touch-Friendly Interface**: All interactive elements optimized for touch devices
+- **✅ Responsive Typography**: Font sizes scale appropriately across devices
+- **✅ Mobile Navigation**: Improved navigation patterns for mobile users
+- **✅ Touch Targets**: Ensured all buttons meet minimum touch target requirements
+- **✅ Mobile-First Approach**: Designed primarily for mobile with desktop enhancements
+
+### 🎯 User Experience Enhancements
+- **✅ Consistent Interactions**: Standardized hover, focus, and active states
+- **✅ Better Feedback**: Enhanced loading states and user feedback
+- **✅ Improved Navigation**: Clearer navigation patterns and breadcrumbs
+- **✅ Visual Hierarchy**: Better information architecture and visual flow
+- **✅ Accessibility**: Improved keyboard navigation and screen reader support
+
+---
+
 ## [1.1.0] - 2024-12-19
 
 ### 🔧 Critical Fixes

@@ -9,11 +9,10 @@ import {
   FiCheck, 
   FiClock, 
   FiAlertTriangle, 
-  FiPlay,
-  FiPause,
   FiFlag,
   FiCheckCircle,
-  FiXCircle
+  FiXCircle,
+  FiAlertCircle
 } from 'react-icons/fi';
 import { validateSubmissionData, testCalculations } from '../utils/debugHelpers';
 
@@ -32,7 +31,6 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submissionError, setSubmissionError] = useState(null);
-  const [isPaused, setIsPaused] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
 
   // Shuffle function to randomize questions
@@ -92,7 +90,7 @@ export default function QuizPage() {
   }, [id, navigate]);
 
   useEffect(() => {
-    if (!timeLeft || submitted || isPaused) return;
+    if (!timeLeft || submitted) return;
     const interval = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -104,7 +102,7 @@ export default function QuizPage() {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [timeLeft, submitted, isPaused]);
+  }, [timeLeft, submitted]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -213,11 +211,11 @@ export default function QuizPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-accent1-50 to-accent2-50 flex justify-center items-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex justify-center items-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-500 border-t-transparent mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Quiz</h2>
-          <p className="text-gray-600">Please wait while we prepare your assessment...</p>
+          <h2 className="text-xl font-semibold text-slate-800 mb-2">Loading Quiz</h2>
+          <p className="text-slate-600">Please wait while we prepare your assessment...</p>
         </div>
       </div>
     );
@@ -230,8 +228,8 @@ export default function QuizPage() {
           <div className="bg-error-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
             <FiAlertTriangle className="w-8 h-8 text-error-600" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Quiz</h2>
-          <p className="text-gray-700 mb-6">{error}</p>
+          <h2 className="text-xl font-semibold text-slate-800 mb-2">Error Loading Quiz</h2>
+          <p className="text-slate-700 mb-6">{error}</p>
           <button
             onClick={() => navigate('/student-dashboard')}
             className="btn-primary"
@@ -250,8 +248,8 @@ export default function QuizPage() {
           <div className="bg-accent2-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
             <FiCheckCircle className="w-8 h-8 text-accent2-600" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Quiz Submitted!</h2>
-          <p className="text-gray-700 mb-4">
+          <h2 className="text-xl font-semibold text-slate-800 mb-2">Quiz Submitted!</h2>
+          <p className="text-slate-700 mb-4">
             Your score: <span className="font-semibold text-primary-600">{score}/{quiz.questions.length}</span>
           </p>
           {submissionError && (
@@ -274,17 +272,18 @@ export default function QuizPage() {
   const currentQ = quiz.questions[currentQuestion];
   const answeredQuestions = Object.keys(answers).length;
   const progress = (answeredQuestions / quiz.questions.length) * 100;
+  const isCriticalTime = timeLeft <= 60; // 1 minute or less
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-accent1-50 to-accent2-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <div className="bg-white shadow-soft border-b border-primary-200">
+      <div className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Back Button */}
             <button
               onClick={() => navigate('/student-dashboard')}
-              className="flex items-center text-primary-600 hover:text-primary-700 hover:bg-primary-50 px-3 py-2 rounded-lg transition-all duration-200"
+              className="flex items-center text-slate-600 hover:text-slate-800 hover:bg-slate-100 px-3 py-2 rounded-lg transition-all duration-200"
             >
               <FiArrowLeft className="w-5 h-5 mr-2" />
               Back to Dashboard
@@ -292,7 +291,7 @@ export default function QuizPage() {
 
             {/* Quiz Title */}
             <div className="text-center flex-1">
-              <h1 className="text-lg font-semibold text-gray-800 truncate">
+              <h1 className="text-lg font-semibold text-slate-800 truncate">
                 {quiz.title}
               </h1>
               <p className="text-sm text-primary-600 font-medium">
@@ -304,17 +303,17 @@ export default function QuizPage() {
       </div>
 
       {/* Progress Bar */}
-      <div className="bg-white border-b border-primary-200">
+      <div className="bg-white/60 backdrop-blur-sm border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-primary-700">
+            <span className="text-sm font-medium text-slate-700">
               Progress: {answeredQuestions}/{quiz.questions.length} answered
             </span>
             <span className="text-sm text-primary-600 font-medium">
               {Math.round(progress)}% complete
             </span>
           </div>
-          <div className="w-full bg-primary-100 rounded-full h-3">
+          <div className="w-full bg-slate-200 rounded-full h-3">
             <div 
               className="bg-gradient-to-r from-primary-500 to-accent1-500 h-3 rounded-full transition-all duration-500 shadow-sm"
               style={{ width: `${progress}%` }}
@@ -324,37 +323,30 @@ export default function QuizPage() {
       </div>
 
       {/* Timer */}
-      <div className="bg-white border-b border-primary-200">
+      <div className="bg-white/60 backdrop-blur-sm border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <FiClock className="w-5 h-5 text-accent1-500" />
-                <span className="text-lg font-mono font-semibold text-accent1-700">
+              <div className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
+                isCriticalTime 
+                  ? 'bg-error-100 text-error-700 animate-timer-pulse' 
+                  : 'bg-accent1-100 text-accent1-700'
+              }`}>
+                <FiClock className={`w-5 h-5 ${isCriticalTime ? 'animate-pulse' : ''}`} />
+                <span className={`text-lg font-mono font-bold ${
+                  isCriticalTime ? 'timer-critical' : ''
+                }`}>
                   {formatTime(timeLeft)}
                 </span>
-              </div>
-              <button
-                onClick={() => setIsPaused(!isPaused)}
-                className="flex items-center space-x-2 px-3 py-1 rounded-lg bg-accent1-100 hover:bg-accent1-200 text-accent1-700 transition-all duration-200"
-              >
-                {isPaused ? (
-                  <>
-                    <FiPlay className="w-4 h-4" />
-                    <span className="text-sm font-medium">Resume</span>
-                  </>
-                ) : (
-                  <>
-                    <FiPause className="w-4 h-4" />
-                    <span className="text-sm font-medium">Pause</span>
-                  </>
+                {isCriticalTime && (
+                  <FiAlertCircle className="w-4 h-4 animate-pulse" />
                 )}
-              </button>
+              </div>
             </div>
 
             <button
               onClick={() => setShowConfirmSubmit(true)}
-              className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent1-500 hover:from-primary-600 hover:to-accent1-600 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="btn-primary flex items-center space-x-2"
             >
               <FiFlag className="w-4 h-4" />
               <span>Submit Quiz</span>
@@ -369,16 +361,16 @@ export default function QuizPage() {
           {/* Question */}
           <div className="mb-8">
             <div className="flex items-start space-x-3 mb-6">
-              <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-primary-500 to-accent1-500 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-md">
+              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-primary-500 to-accent1-500 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-lg">
                 {currentQuestion + 1}
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4 leading-relaxed">
+                <h2 className="text-xl font-semibold text-slate-800 mb-6 leading-relaxed">
                   {currentQ.question}
                 </h2>
                 
                 {/* Options */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {currentQ.options ? (
                     currentQ.options.map((option, index) => (
                       <motion.button
@@ -387,7 +379,7 @@ export default function QuizPage() {
                         className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 shadow-sm ${
                           answers[currentQ.id] === option.id
                             ? 'border-primary-500 bg-gradient-to-r from-primary-50 to-accent1-50 text-primary-700 shadow-md'
-                            : 'border-gray-200 hover:border-primary-300 hover:bg-primary-25 bg-white text-gray-700 hover:shadow-md'
+                            : 'border-slate-200 hover:border-primary-300 hover:bg-primary-25 bg-white text-slate-700 hover:shadow-md'
                         }`}
                         whileHover={{ scale: 1.02, y: -2 }}
                         whileTap={{ scale: 0.98 }}
@@ -396,10 +388,10 @@ export default function QuizPage() {
                           <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                             answers[currentQ.id] === option.id
                               ? 'border-primary-500 bg-primary-500 shadow-sm'
-                              : 'border-gray-300'
+                              : 'border-slate-300'
                           }`}>
                             {answers[currentQ.id] === option.id && (
-                              <FiCheck className="w-3 h-3 text-white" />
+                              <FiCheck className="w-4 h-4 text-white" />
                             )}
                           </div>
                           <span className="font-medium">{option.text}</span>
@@ -407,34 +399,34 @@ export default function QuizPage() {
                       </motion.button>
                     ))
                   ) : (
-                    // True/False question
+                    // True/False options
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {[
-                        { id: 'true', text: 'True', color: 'accent2' },
-                        { id: 'false', text: 'False', color: 'error' }
+                        { id: 'true', text: 'True' },
+                        { id: 'false', text: 'False' }
                       ].map((option) => (
                         <motion.button
                           key={option.id}
                           onClick={() => handleSelect(currentQ.id, option.id)}
                           className={`p-4 rounded-xl border-2 transition-all duration-300 shadow-sm ${
                             answers[currentQ.id] === option.id
-                              ? `border-${option.color}-500 bg-gradient-to-r from-${option.color}-50 to-${option.color}-100 text-${option.color}-700 shadow-md`
-                              : `border-gray-200 hover:border-${option.color}-300 hover:bg-${option.color}-25 bg-white text-gray-700 hover:shadow-md`
+                              ? 'border-primary-500 bg-gradient-to-r from-primary-50 to-accent1-50 text-primary-700 shadow-md'
+                              : 'border-slate-200 hover:border-primary-300 hover:bg-primary-25 bg-white text-slate-700 hover:shadow-md'
                           }`}
                           whileHover={{ scale: 1.02, y: -2 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <div className="flex items-center justify-center space-x-2">
+                          <div className="flex items-center justify-center space-x-3">
                             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                               answers[currentQ.id] === option.id
-                                ? `border-${option.color}-500 bg-${option.color}-500 shadow-sm`
-                                : 'border-gray-300'
+                                ? 'border-primary-500 bg-primary-500 shadow-sm'
+                                : 'border-slate-300'
                             }`}>
                               {answers[currentQ.id] === option.id && (
-                                <FiCheck className="w-3 h-3 text-white" />
+                                <FiCheck className="w-4 h-4 text-white" />
                               )}
                             </div>
-                            <span className="font-medium">{option.text}</span>
+                            <span className="font-semibold text-lg">{option.text}</span>
                           </div>
                         </motion.button>
                       ))}
@@ -446,14 +438,14 @@ export default function QuizPage() {
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between pt-6 border-t border-primary-200">
+          <div className="flex items-center justify-between pt-6 border-t border-slate-200">
             <button
               onClick={handlePrevQuestion}
               disabled={currentQuestion === 0}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
                 currentQuestion === 0
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-primary-600 hover:text-primary-700 hover:bg-primary-50'
+                  ? 'text-slate-400 cursor-not-allowed'
+                  : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
               }`}
             >
               <FiArrowLeft className="w-4 h-4" />
@@ -462,17 +454,15 @@ export default function QuizPage() {
 
             <div className="flex items-center space-x-2">
               {quiz.questions.map((_, index) => (
-                <button
+                <div
                   key={index}
-                  onClick={() => setCurrentQuestion(index)}
-                  className={`w-4 h-4 rounded-full transition-all duration-200 shadow-sm ${
+                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
                     index === currentQuestion
-                      ? 'bg-gradient-to-r from-primary-500 to-accent1-500 shadow-md'
+                      ? 'bg-primary-500'
                       : answers[quiz.questions[index].id]
-                        ? 'bg-gradient-to-r from-accent2-500 to-green-500 shadow-md'
-                        : 'bg-gray-300 hover:bg-gray-400'
+                      ? 'bg-accent2-500'
+                      : 'bg-slate-300'
                   }`}
-                  aria-label={`Go to question ${index + 1}`}
                 />
               ))}
             </div>
@@ -480,10 +470,10 @@ export default function QuizPage() {
             <button
               onClick={handleNextQuestion}
               disabled={currentQuestion === quiz.questions.length - 1}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
                 currentQuestion === quiz.questions.length - 1
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-primary-600 hover:text-primary-700 hover:bg-primary-50'
+                  ? 'text-slate-400 cursor-not-allowed'
+                  : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
               }`}
             >
               <span>Next</span>
@@ -500,29 +490,29 @@ export default function QuizPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            onClick={() => setShowConfirmSubmit(false)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl border border-primary-100"
+              className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-warning-100 to-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <div className="w-16 h-16 bg-warning-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <FiAlertTriangle className="w-8 h-8 text-warning-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">
-                  Submit Quiz?
-                </h3>
-                <p className="text-gray-700 mb-8 leading-relaxed">
-                  You have answered <span className="font-semibold text-primary-600">{answeredQuestions}</span> out of <span className="font-semibold text-primary-600">{quiz.questions.length}</span> questions. 
-                  Are you sure you want to submit your quiz?
+                <h3 className="text-xl font-semibold text-slate-800 mb-2">Submit Quiz?</h3>
+                <p className="text-slate-600 mb-6">
+                  Are you sure you want to submit your quiz? This action cannot be undone.
                 </p>
-                <div className="flex space-x-4">
+                
+                <div className="flex gap-3">
                   <button
                     onClick={() => setShowConfirmSubmit(false)}
-                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200 shadow-sm"
+                    className="btn-secondary flex-1"
                   >
                     Cancel
                   </button>
@@ -531,7 +521,7 @@ export default function QuizPage() {
                       setShowConfirmSubmit(false);
                       handleSubmit();
                     }}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent1-500 hover:from-primary-600 hover:to-accent1-600 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
+                    className="btn-primary flex-1"
                   >
                     Submit Quiz
                   </button>

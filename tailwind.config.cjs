@@ -212,7 +212,7 @@ module.exports = {
       },
     },
     fontFamily: {
-      sans: ['Inter', 'system-ui', 'sans-serif'],
+      sans: ['Poppins', 'system-ui', 'sans-serif'],
       mono: ['JetBrains Mono', 'monospace'],
     },
     spacing: {
@@ -224,6 +224,10 @@ module.exports = {
       'fade-in': 'fadeIn 0.5s ease-in-out',
       'slide-up': 'slideUp 0.3s ease-out',
       'bounce-gentle': 'bounceGentle 2s infinite',
+      'timer-pulse': 'timerPulse 1s ease-in-out infinite',
+      'slide-in-right': 'slideInRight 0.3s ease-out',
+      'slide-in-left': 'slideInLeft 0.3s ease-out',
+      'scale-in': 'scaleIn 0.2s ease-out',
     },
     keyframes: {
       fadeIn: {
@@ -238,11 +242,46 @@ module.exports = {
         '0%, 100%': { transform: 'translateY(0)' },
         '50%': { transform: 'translateY(-5px)' },
       },
+      timerPulse: {
+        '0%, 100%': { 
+          transform: 'scale(1)',
+          boxShadow: '0 0 0 0 rgba(239, 68, 68, 0.7)'
+        },
+        '50%': { 
+          transform: 'scale(1.05)',
+          boxShadow: '0 0 0 10px rgba(239, 68, 68, 0)'
+        },
+      },
+      slideInRight: {
+        '0%': { transform: 'translateX(20px)', opacity: '0' },
+        '100%': { transform: 'translateX(0)', opacity: '1' },
+      },
+      slideInLeft: {
+        '0%': { transform: 'translateX(-20px)', opacity: '0' },
+        '100%': { transform: 'translateX(0)', opacity: '1' },
+      },
+      scaleIn: {
+        '0%': { transform: 'scale(0.95)', opacity: '0' },
+        '100%': { transform: 'scale(1)', opacity: '1' },
+      },
     },
     boxShadow: {
       'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
       'medium': '0 4px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
       'large': '0 10px 40px -10px rgba(0, 0, 0, 0.15), 0 2px 10px -2px rgba(0, 0, 0, 0.05)',
+      'xl': '0 20px 60px -12px rgba(0, 0, 0, 0.25), 0 8px 20px -4px rgba(0, 0, 0, 0.1)',
+      'primary': '0 4px 14px 0 rgba(99, 102, 241, 0.25)',
+      'primary-hover': '0 8px 25px 0 rgba(99, 102, 241, 0.35)',
+      'danger': '0 4px 14px 0 rgba(239, 68, 68, 0.25)',
+      'danger-hover': '0 8px 25px 0 rgba(239, 68, 68, 0.35)',
+    },
+    borderRadius: {
+      'xl': '1rem',
+      '2xl': '1.5rem',
+      '3xl': '2rem',
+    },
+    backdropBlur: {
+      xs: '2px',
     },
   },
   plugins: [],

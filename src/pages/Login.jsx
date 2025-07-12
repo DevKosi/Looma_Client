@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/aut
 import { doc, getDoc } from "firebase/firestore";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FiMail, FiLock, FiArrowRight, FiAlertCircle, FiCheckCircle, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiMail, FiLock, FiArrowRight, FiAlertCircle, FiCheckCircle, FiEye, FiEyeOff, FiUser, FiShield } from "react-icons/fi";
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -177,48 +177,62 @@ export default function Login() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4"
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4 relative overflow-hidden"
     >
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-primary-200/20 to-primary-300/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-accent1-200/20 to-accent1-300/10 rounded-full blur-3xl"></div>
+      </div>
+
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="bg-white rounded-xl shadow-lg overflow-hidden w-full max-w-md"
+        className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden w-full max-w-md relative z-10"
       >
         {/* Header */}
-        <div className="bg-[#6366F1] p-6 text-center">
-          <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-          <p className="text-[#E2E8F0] mt-1">Sign in to your account</p>
+        <div className="bg-gradient-to-r from-primary-600 to-accent1-600 p-8 text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 to-accent1-600/20"></div>
+          <div className="relative z-10">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FiShield className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+            <p className="text-white/90 font-medium">Sign in to your account</p>
+          </div>
         </div>
 
         {/* Messages */}
-        <div className="px-6 pt-4">
+        <div className="px-8 pt-6">
           {errorMsg && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-[#F43F5E]/10 text-[#F43F5E] p-3 rounded-lg mb-4 text-sm flex items-center"
+              className="status-error mb-6 flex items-center gap-3"
             >
-              <span className="mr-2">⚠️</span> {errorMsg}
+              <FiAlertCircle className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm font-medium">{errorMsg}</span>
             </motion.div>
           )}
           {isResetSent && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-[#10B981]/10 text-[#10B981] p-3 rounded-lg mb-4 text-sm flex items-center"
+              className="status-success mb-6 flex items-center gap-3"
             >
-              <span className="mr-2">✓</span> Password reset link sent to your email. Please check your inbox and spam folder.
+              <FiCheckCircle className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm font-medium">Password reset link sent to your email. Please check your inbox and spam folder.</span>
             </motion.div>
           )}
         </div>
 
         {/* Form */}
-        <form onSubmit={handleLogin} className="p-6 space-y-4">
+        <form onSubmit={handleLogin} className="px-8 pb-8 space-y-6">
           {/* Email */}
-          <div className="space-y-1">
-            <label className="text-[#1E293B] text-sm font-medium flex items-center">
-              <FiMail className="mr-2" /> Email Address
+          <div className="space-y-2">
+            <label className="text-slate-700 text-sm font-semibold flex items-center gap-2">
+              <FiMail className="w-4 h-4" /> Email Address
             </label>
             <input
               type="email"
@@ -226,15 +240,18 @@ export default function Login() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full p-3 border border-[#E2E8F0] rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+              className="input-field"
               placeholder="your@email.com"
             />
+            {validationErrors.email && (
+              <p className="text-red-500 text-xs font-medium">{validationErrors.email}</p>
+            )}
           </div>
 
           {/* Password */}
-          <div className="space-y-1">
-            <label className="text-[#1E293B] text-sm font-medium flex items-center">
-              <FiLock className="mr-2" /> Password
+          <div className="space-y-2">
+            <label className="text-slate-700 text-sm font-semibold flex items-center gap-2">
+              <FiLock className="w-4 h-4" /> Password
             </label>
             <div className="relative">
               <input
@@ -243,18 +260,21 @@ export default function Login() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full p-3 border border-[#E2E8F0] rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent pr-10"
+                className="input-field pr-12"
                 placeholder="Enter your password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#6366F1]"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-primary-600 transition-colors"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
               </button>
             </div>
+            {validationErrors.password && (
+              <p className="text-red-500 text-xs font-medium">{validationErrors.password}</p>
+            )}
           </div>
 
           {/* Submit Button */}
@@ -263,15 +283,13 @@ export default function Login() {
             disabled={loading}
             whileHover={{ scale: loading ? 1 : 1.02 }}
             whileTap={{ scale: loading ? 1 : 0.98 }}
-            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${
-              loading 
-                ? 'bg-[#6366F1]/70 cursor-not-allowed' 
-                : 'bg-[#6366F1] hover:bg-[#4F46E5] focus:ring-2 focus:ring-[#6366F1] focus:ring-offset-2'
-            } flex items-center justify-center`}
+            className={`w-full btn-primary flex items-center justify-center gap-2 ${
+              loading ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
           >
             {loading ? (
               <>
-                <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -279,27 +297,27 @@ export default function Login() {
               </>
             ) : (
               <>
-                Continue <FiArrowRight className="ml-2" />
+                Continue <FiArrowRight className="w-4 h-4" />
               </>
             )}
           </motion.button>
         </form>
 
         {/* Footer Links */}
-        <div className="px-6 pb-6 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <div className="px-8 pb-8 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-slate-100 pt-6">
           <button
             onClick={handleForgotPassword}
             disabled={loading}
-            className="text-[#6366F1] hover:text-[#4F46E5] text-sm font-medium transition-colors disabled:opacity-50"
+            className="text-primary-600 hover:text-primary-700 text-sm font-semibold transition-colors disabled:opacity-50"
           >
             Forgot password?
           </button>
 
-          <div className="text-[#64748B] text-sm">
+          <div className="text-slate-600 text-sm">
             Don't have an account?{" "}
             <Link
               to="/register"
-              className="text-[#6366F1] hover:text-[#4F46E5] font-medium"
+              className="text-primary-600 hover:text-primary-700 font-semibold transition-colors"
             >
               Sign up
             </Link>
