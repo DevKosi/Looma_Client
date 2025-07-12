@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase/firebaseConfig';
-import { doc, getDoc, getDocs, collection, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, getDocs, collection, updateDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { 
   FiShield, 
   FiUsers, 
@@ -29,7 +29,8 @@ import {
   FiDatabase,
   FiMonitor,
   FiWifi,
-  FiServer
+  FiServer,
+  FiUpload
 } from 'react-icons/fi';
 import {
   fetchPlatformStats,
@@ -73,6 +74,7 @@ export default function SuperAdminDashboard() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const [bulkCodes, setBulkCodes] = useState('');
 
   const navigate = useNavigate();
 
@@ -289,6 +291,36 @@ export default function SuperAdminDashboard() {
       loadPlatformStats();
     } catch (error) {
       showNotification(`Failed to delete quiz: ${error.message}`, 'error');
+    }
+  };
+
+  // Bulk upload access codes
+  const handleBulkUploadCodes = async () => {
+    if (!selectedQuiz || !bulkCodes.trim()) return;
+    
+    setLoading(prev => ({ ...prev, backup: true })); // Reusing backup loading state
+    try {
+      const codes = bulkCodes.split(/\s+/).filter(code => code.trim().length > 0);
+      const batch = writeBatch(db);
+      
+      codes.forEach(code => {
+        const codeRef = doc(collection(db, 'quizzes', selectedQuiz, 'codes'), code);
+        batch.set(codeRef, { 
+          code, 
+          used: false, 
+          usedBy: null,
+          createdAt: serverTimestamp() 
+        });
+      });
+
+      await batch.commit();
+      showNotification(`${codes.length} codes uploaded successfully to quiz!`);
+      setBulkCodes('');
+      setSelectedQuiz(null);
+    } catch (error) {
+      showNotification('Failed to upload codes', 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, backup: false }));
     }
   };
 
@@ -916,6 +948,16 @@ export default function SuperAdminDashboard() {
                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                            <div className="flex items-center gap-2">
                              <button
+                               onClick={() => {
+                                 setSelectedQuiz(quiz.id);
+                                 setBulkCodes('');
+                               }}
+                               className="text-green-600 hover:text-green-900 p-1"
+                               title="Upload Codes"
+                             >
+                               <FiUpload size={16} />
+                             </button>
+                             <button
                                onClick={() => setSelectedQuiz(quiz)}
                                className="text-blue-600 hover:text-blue-900 p-1"
                                title="View Details"
@@ -943,6 +985,61 @@ export default function SuperAdminDashboard() {
                  </div>
                )}
              </div>
+
+             {/* Bulk Code Upload */}
+             {selectedQuiz && (
+               <motion.div
+                 initial={{ opacity: 0, height: 0 }}
+                 animate={{ opacity: 1, height: 'auto' }}
+                 className="bg-white rounded-lg shadow-sm p-6"
+               >
+                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                   <FiUpload className="text-green-500" /> Upload Access Codes
+                 </h3>
+                 <p className="text-sm text-gray-600 mb-4">
+                   Uploading codes for: <strong>{allQuizzes.find(q => q.id === selectedQuiz)?.title}</strong>
+                   <br />
+                   Paste codes below (one per line or separated by spaces)
+                 </p>
+                 <textarea
+                   value={bulkCodes}
+                   onChange={(e) => setBulkCodes(e.target.value)}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                   rows="6"
+                   placeholder="CODE1 CODE2 CODE3..."
+                 ></textarea>
+                 <div className="flex justify-end gap-3">
+                   <button
+                     onClick={() => {
+                       setSelectedQuiz(null);
+                       setBulkCodes('');
+                     }}
+                     className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                   >
+                     Cancel
+                   </button>
+                   <button
+                     onClick={handleBulkUploadCodes}
+                     disabled={!bulkCodes.trim() || loading.backup}
+                     className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md flex items-center gap-2 disabled:opacity-50"
+                   >
+                     {loading.backup ? (
+                       <>
+                         <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                         </svg>
+                         Uploading...
+                       </>
+                     ) : (
+                       <>
+                         <FiUpload /> Upload Codes
+                       </>
+                     )}
+                   </button>
+                 </div>
+               </motion.div>
+             )}
            </div>
          )}
 
