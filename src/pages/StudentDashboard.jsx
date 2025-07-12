@@ -16,14 +16,10 @@ import {
 export default function StudentDashboard() {
   const [user, setUser] = useState(null);
   const [quizzes, setQuizzes] = useState([]);
-  const [userResults, setUserResults] = useState([]);
   const [userStats, setUserStats] = useState(null);
-  const [userPosition, setUserPosition] = useState(null);
   const [loading, setLoading] = useState({ 
     user: true, 
-    quizzes: true, 
-    results: false,
-    position: false 
+    quizzes: true
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [notification, setNotification] = useState(null);
@@ -88,11 +84,10 @@ export default function StudentDashboard() {
     fetchData();
   }, [navigate]);
 
-  // Fetch user results and statistics
-  const fetchUserResults = async () => {
+  // Fetch user statistics for profile tab
+  const fetchUserStats = async () => {
     if (!user?.uid) return;
     
-    setLoading(prev => ({ ...prev, results: true }));
     try {
       const allResults = [];
       
@@ -119,46 +114,19 @@ export default function StudentDashboard() {
         });
       }
 
-      // Sort by submission date (newest first)
-      allResults.sort((a, b) => b.submittedAt - a.submittedAt);
-      
-      setUserResults(allResults);
-      
       // Calculate user statistics
       const stats = calculateUserStats(allResults);
       setUserStats(stats);
       
     } catch (error) {
-      console.error('Error fetching user results:', error);
-    } finally {
-      setLoading(prev => ({ ...prev, results: false }));
+      console.error('Error fetching user stats:', error);
     }
   };
 
-  // Fetch user position in leaderboards
-  const fetchUserPosition = async () => {
-    if (!user?.uid || !user?.department) return;
-    
-    setLoading(prev => ({ ...prev, position: true }));
-    try {
-      const position = await getUserPosition(user.uid, user.department);
-      setUserPosition(position);
-    } catch (error) {
-      console.error('Error fetching user position:', error);
-    } finally {
-      setLoading(prev => ({ ...prev, position: false }));
-    }
-  };
-
-  // Load additional data when user changes or tabs are accessed
+  // Load stats when profile tab is accessed
   useEffect(() => {
-    if (user && (activeTab === 'results' || activeTab === 'leaderboard')) {
-      if (activeTab === 'results' && userResults.length === 0) {
-        fetchUserResults();
-      }
-      if (activeTab === 'leaderboard' && !userPosition) {
-        fetchUserPosition();
-      }
+    if (user && activeTab === 'profile' && !userStats) {
+      fetchUserStats();
     }
   }, [user, activeTab]);
 
@@ -175,6 +143,11 @@ export default function StudentDashboard() {
     setModalError(null);
     setVerificationStatus(null);
     setShowModal(true);
+  };
+
+  // Handle leaderboard tab click - redirect to leaderboard page
+  const handleLeaderboardClick = () => {
+    navigate('/leaderboard');
   };
 
  // Optimized verification sequence
@@ -239,71 +212,64 @@ const verifyAccessCode = async () => {
 
   if (loading.user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] relative">
+    <div className="min-h-screen bg-gray-50 relative">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-2 bg-blue-100 rounded-full">
-              <FiBook className="text-blue-600" size={20} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 bg-blue-100 rounded-full">
+                <FiBook className="text-blue-600" size={18} />
+              </div>
+              <div>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-800">Student Dashboard</h1>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  {user?.department} • {user?.regNumber}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold text-gray-800">Student Dashboard</h1>
-              <p className="text-sm text-gray-600">
-                {user?.department} • {user?.regNumber}
-              </p>
+            
+            <div className="flex items-center gap-3 sm:gap-4">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium"
+              >
+                <FiLogOut size={16} /> 
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium"
-            >
-              <FiLogOut /> Sign Out
-            </button>
           </div>
         </div>
       </header>
 
       {/* Navigation */}
       <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex overflow-x-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex overflow-x-auto scrollbar-hide">
             <button
               onClick={() => setActiveTab('quizzes')}
-              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'quizzes' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               <FiBook size={16} /> Available Quizzes
             </button>
             <button
-              onClick={() => setActiveTab('results')}
-              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'results' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <FiBarChart2 size={16} /> My Results
-            </button>
-            <button
-              onClick={() => setActiveTab('leaderboard')}
-              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'leaderboard' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
-              }`}
+              onClick={handleLeaderboardClick}
+              className="px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0 text-gray-500 hover:text-gray-700"
             >
               <FiAward size={16} /> Leaderboard
             </button>
             <button
               onClick={() => setActiveTab('profile')}
-              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'profile' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -314,7 +280,7 @@ const verifyAccessCode = async () => {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* Notification */}
         <AnimatePresence>
           {notification && (
@@ -322,7 +288,7 @@ const verifyAccessCode = async () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className={`p-3 rounded-md mb-6 ${
+              className={`p-3 rounded-md mb-4 sm:mb-6 ${
                 notification.type === 'error' 
                   ? 'bg-red-50 text-red-700' 
                   : 'bg-green-50 text-green-700'
@@ -336,39 +302,39 @@ const verifyAccessCode = async () => {
         {activeTab === 'quizzes' && (
           <>
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex flex-col gap-3 sm:gap-4 md:flex-row mb-4 sm:mb-6">
               <div className="relative flex-1">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiSearch className="text-gray-400" />
+                  <FiSearch className="text-gray-400" size={16} />
                 </div>
                 <input
                   type="text"
                   placeholder="Search quizzes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
               </div>
 
               <div className="relative">
                 <button
                   onClick={() => setShowDepartments(!showDepartments)}
-                  className="flex items-center justify-between gap-2 px-4 py-2 w-full md:w-64 border border-gray-300 rounded-lg bg-white"
+                  className="flex items-center justify-between gap-2 px-4 py-2 w-full md:w-56 lg:w-64 border border-gray-300 rounded-lg bg-white text-sm"
                 >
-                  <span>
+                  <span className="truncate">
                     {departmentFilter === 'all' ? 'All Departments' : departmentFilter}
                   </span>
-                  <FiChevronDown className={`transition-transform ${showDepartments ? 'rotate-180' : ''}`} />
+                  <FiChevronDown className={`transition-transform flex-shrink-0 ${showDepartments ? 'rotate-180' : ''}`} size={16} />
                 </button>
 
                 {showDepartments && (
-                  <div className="absolute z-10 mt-1 w-full md:w-64 bg-white border border-gray-300 rounded-lg shadow-lg">
+                  <div className="absolute z-10 mt-1 w-full md:w-56 lg:w-64 bg-white border border-gray-300 rounded-lg shadow-lg">
                     <button
                       onClick={() => {
                         setDepartmentFilter('all');
                         setShowDepartments(false);
                       }}
-                      className={`block w-full text-left px-4 py-2 hover:bg-gray-100 ${
+                      className={`block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm ${
                         departmentFilter === 'all' ? 'bg-blue-50 text-blue-600' : ''
                       }`}
                     >
@@ -381,7 +347,7 @@ const verifyAccessCode = async () => {
                           setDepartmentFilter(dept);
                           setShowDepartments(false);
                         }}
-                        className={`block w-full text-left px-4 py-2 hover:bg-gray-100 ${
+                        className={`block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm ${
                           departmentFilter === dept ? 'bg-blue-50 text-blue-600' : ''
                         }`}
                       >
@@ -395,52 +361,52 @@ const verifyAccessCode = async () => {
 
             {/* Quizzes Grid */}
             {loading.quizzes ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-lg shadow-sm p-6 h-48 animate-pulse"></div>
+                  <div key={i} className="bg-white rounded-lg shadow-sm p-4 sm:p-6 h-40 sm:h-48 animate-pulse"></div>
                 ))}
               </div>
             ) : filteredQuizzes.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-                <FiBook className="mx-auto text-gray-400" size={48} />
+              <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8 text-center">
+                <FiBook className="mx-auto text-gray-400 mb-4" size={40} />
                 <h3 className="text-lg font-medium text-gray-700 mt-4">
                   {searchTerm || departmentFilter !== 'all' 
                     ? 'No matching quizzes found' 
                     : 'No quizzes available yet'}
                 </h3>
-                <p className="text-gray-500 mt-1">
+                <p className="text-gray-500 mt-1 text-sm">
                   {searchTerm || departmentFilter !== 'all'
                     ? 'Try adjusting your search or filter'
                     : 'Check back later for new quizzes'}
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {filteredQuizzes.map((quiz) => (
                   <motion.div
                     key={quiz.id}
                     whileHover={{ y: -5 }}
                     className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:border-blue-200 transition-all"
                   >
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded-full flex items-center gap-1">
+                    <div className="p-4 sm:p-6">
+                      <div className="flex items-center justify-between mb-3 gap-2">
+                        <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded-full flex items-center gap-1 flex-shrink-0">
                           <FiCheckCircle size={12} /> Approved
                         </span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full truncate">
                             {quiz.department}
                           </span>
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <FiClock size={12} /> {quiz.timeLimit} min
+                          <span className="text-xs text-gray-500 flex items-center gap-1 flex-shrink-0">
+                            <FiClock size={12} /> {quiz.timeLimit}m
                           </span>
                         </div>
                       </div>
 
-                      <h3 className="font-bold text-gray-800 mb-2 line-clamp-2">
+                      <h3 className="font-bold text-gray-800 mb-2 line-clamp-2 text-sm sm:text-base">
                         {quiz.title}
                       </h3>
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-4 line-clamp-3">
                         {quiz.description}
                       </p>
 
@@ -450,7 +416,7 @@ const verifyAccessCode = async () => {
                         </span>
                         <button
                           onClick={() => handleTakeQuiz(quiz)}
-                          className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                          className="text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
                         >
                           <FiLock size={14} /> Take Quiz
                         </button>
@@ -463,312 +429,82 @@ const verifyAccessCode = async () => {
           </>
         )}
 
-        {activeTab === 'results' && (
-          <div className="space-y-6">
-            {/* Statistics Cards */}
-            {userStats && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Total Quizzes</p>
-                      <p className="text-2xl font-bold text-gray-900">{userStats.totalQuizzes}</p>
-                    </div>
-                    <FiBook className="text-blue-500" size={24} />
-                  </div>
-                </div>
-                
-                <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-500">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Average Score</p>
-                      <p className="text-2xl font-bold text-gray-900">{userStats.averagePercentage}%</p>
-                    </div>
-                    <FiBarChart2 className="text-green-500" size={24} />
-                  </div>
-                </div>
-                
-                <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-yellow-500">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Best Score</p>
-                      <p className="text-2xl font-bold text-gray-900">{userStats.highestScore}</p>
-                    </div>
-                    <FiAward className="text-yellow-500" size={24} />
-                  </div>
-                </div>
-                
-                <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-purple-500">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Current Streak</p>
-                      <p className="text-2xl font-bold text-gray-900">{userStats.recentStreak}</p>
-                    </div>
-                    <FiTrendingUp className="text-purple-500" size={24} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Results Table */}
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <FiBarChart2 className="text-blue-500" />
-                  Quiz Results ({userResults.length})
-                </h2>
-              </div>
-              
-              {loading.results ? (
-                <div className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading your results...</p>
-                </div>
-              ) : userResults.length === 0 ? (
-                <div className="p-8 text-center">
-                  <FiBarChart2 className="mx-auto text-4xl text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-700 mb-2">No Quiz Results Yet</h3>
-                  <p className="text-gray-500">Take your first quiz to see your results here!</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quiz</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {userResults.map((result, index) => (
-                        <tr key={result.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{result.quizTitle}</div>
-                              <div className="text-sm text-gray-500">{result.quizDepartment}</div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
-                              {result.score}/{result.total}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-1 max-w-20">
-                                <div className={`h-2 rounded-full mr-2 ${
-                                  (result.percentage || 0) >= 70 ? 'bg-green-200' :
-                                  (result.percentage || 0) >= 50 ? 'bg-yellow-200' : 'bg-red-200'
-                                }`}>
-                                  <div 
-                                    className={`h-2 rounded-full ${
-                                      (result.percentage || 0) >= 70 ? 'bg-green-500' :
-                                      (result.percentage || 0) >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                                    }`}
-                                    style={{ width: `${Math.min(result.percentage || 0, 100)}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900 ml-2">
-                                {result.percentage || 0}%
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {result.submittedAt.toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              (result.percentage || 0) >= 90 ? 'bg-green-100 text-green-800' :
-                              (result.percentage || 0) >= 80 ? 'bg-blue-100 text-blue-800' :
-                              (result.percentage || 0) >= 70 ? 'bg-yellow-100 text-yellow-800' :
-                              (result.percentage || 0) >= 50 ? 'bg-orange-100 text-orange-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {(result.percentage || 0) >= 90 ? 'Excellent' :
-                               (result.percentage || 0) >= 80 ? 'Very Good' :
-                               (result.percentage || 0) >= 70 ? 'Good' :
-                               (result.percentage || 0) >= 50 ? 'Fair' : 'Needs Improvement'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'leaderboard' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-medium text-gray-800 flex items-center gap-2">
-                  <FiAward className="text-yellow-500" />
-                  Leaderboard Preview
-                </h3>
-                <p className="text-gray-500 text-sm">
-                  See how you rank against your peers
-                </p>
-              </div>
-              <button
-                onClick={() => navigate('/leaderboard')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                View Full Leaderboard
-              </button>
-            </div>
-
-            {loading.position ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-gray-50 rounded-lg animate-pulse">
-                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-8 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-3 bg-gray-300 rounded"></div>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg animate-pulse">
-                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-8 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-3 bg-gray-300 rounded"></div>
-                </div>
-              </div>
-            ) : userPosition ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
-                  <h4 className="font-semibold text-gray-800 mb-2">Department Ranking</h4>
-                  <p className="text-2xl font-bold text-yellow-600">
-                    #{userPosition.department.rank || 'Unranked'} of {userPosition.department.totalParticipants || 0}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {userPosition.department.rank ? 'Your current position' : 'Take quizzes to get ranked'}
-                  </p>
-                  {userPosition.department.stats && (
-                    <div className="mt-2 text-xs text-gray-500">
-                      Avg: {userPosition.department.stats.averagePercentage}% • 
-                      Quizzes: {userPosition.department.stats.totalQuizzes}
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                  <h4 className="font-semibold text-gray-800 mb-2">Global Ranking</h4>
-                  <p className="text-2xl font-bold text-blue-600">
-                    #{userPosition.global.rank || 'Unranked'} of {userPosition.global.totalParticipants || 0}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {userPosition.global.rank ? 'Compete with all students' : 'Take quizzes to get ranked'}
-                  </p>
-                  {userPosition.global.stats && (
-                    <div className="mt-2 text-xs text-gray-500">
-                      Avg: {userPosition.global.stats.averagePercentage}% • 
-                      Points: {userPosition.global.stats.totalPoints}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
-                  <h4 className="font-semibold text-gray-800 mb-2">Department Ranking</h4>
-                  <p className="text-2xl font-bold text-yellow-600">Not Available</p>
-                  <p className="text-sm text-gray-600">Take quizzes to see your position</p>
-                </div>
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                  <h4 className="font-semibold text-gray-800 mb-2">Global Ranking</h4>
-                  <p className="text-2xl font-bold text-blue-600">Not Available</p>
-                  <p className="text-sm text-gray-600">Take quizzes to see your position</p>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <p className="text-center text-gray-600">
-                🏆 Take more quizzes to improve your ranking and compete for the top spot!
-              </p>
-            </div>
-          </div>
-        )}
-
         {activeTab === 'profile' && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Profile Header */}
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-sm overflow-hidden">
-              <div className="px-6 py-8 text-white">
-                <div className="flex items-center space-x-6">
-                  <div className="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                    <FiUser className="w-10 h-10 text-white" />
+              <div className="px-4 sm:px-6 py-6 sm:py-8 text-white">
+                <div className="flex items-center space-x-4 sm:space-x-6">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FiUser className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">{user?.fullName || 'Student'}</h2>
-                    <p className="text-blue-100 mt-1">{user?.regNumber}</p>
-                    <p className="text-blue-200 text-sm">{user?.department} Department</p>
+                  <div className="min-w-0">
+                    <h2 className="text-xl sm:text-2xl font-bold truncate">{user?.fullName || 'Student'}</h2>
+                    <p className="text-blue-100 mt-1 text-sm sm:text-base">{user?.regNumber}</p>
+                    <p className="text-blue-200 text-xs sm:text-sm">{user?.department} Department</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Profile Information */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Personal Information */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <FiUser className="text-blue-500" />
                   Personal Information
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
+                    <div className="min-w-0">
                       <label className="block text-sm font-medium text-gray-600">Full Name</label>
-                      <p className="text-gray-900 font-semibold">{user?.fullName || 'Not provided'}</p>
+                      <p className="text-gray-900 font-semibold truncate">{user?.fullName || 'Not provided'}</p>
                     </div>
-                    <FiUser className="text-gray-400" />
+                    <FiUser className="text-gray-400 flex-shrink-0" />
                   </div>
                   
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
+                    <div className="min-w-0">
                       <label className="block text-sm font-medium text-gray-600">Registration Number</label>
-                      <p className="text-gray-900 font-semibold">{user?.regNumber || 'Not provided'}</p>
+                      <p className="text-gray-900 font-semibold truncate">{user?.regNumber || 'Not provided'}</p>
                     </div>
-                    <FiBook className="text-gray-400" />
+                    <FiBook className="text-gray-400 flex-shrink-0" />
                   </div>
                   
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
+                    <div className="min-w-0">
                       <label className="block text-sm font-medium text-gray-600">Department</label>
-                      <p className="text-gray-900 font-semibold">{user?.department || 'Not provided'}</p>
+                      <p className="text-gray-900 font-semibold truncate">{user?.department || 'Not provided'}</p>
                     </div>
-                    <FiBook className="text-gray-400" />
+                    <FiBook className="text-gray-400 flex-shrink-0" />
                   </div>
                   
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
+                    <div className="min-w-0">
                       <label className="block text-sm font-medium text-gray-600">Email Address</label>
-                      <p className="text-gray-900 font-semibold">{user?.email || 'Not provided'}</p>
+                      <p className="text-gray-900 font-semibold truncate">{user?.email || 'Not provided'}</p>
                     </div>
-                    <FiUser className="text-gray-400" />
+                    <FiUser className="text-gray-400 flex-shrink-0" />
                   </div>
                 </div>
               </div>
 
               {/* Academic Summary */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <FiBarChart2 className="text-green-500" />
                   Academic Summary
                 </h3>
                 
                 {userStats ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                       <div>
                         <label className="block text-sm font-medium text-green-600">Quizzes Completed</label>
                         <p className="text-green-900 font-bold text-xl">{userStats.totalQuizzes}</p>
                       </div>
-                      <FiBook className="text-green-500 w-6 h-6" />
+                      <FiBook className="text-green-500 w-6 h-6 flex-shrink-0" />
                     </div>
                     
                     <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
@@ -776,7 +512,7 @@ const verifyAccessCode = async () => {
                         <label className="block text-sm font-medium text-blue-600">Average Score</label>
                         <p className="text-blue-900 font-bold text-xl">{userStats.averagePercentage}%</p>
                       </div>
-                      <FiBarChart2 className="text-blue-500 w-6 h-6" />
+                      <FiBarChart2 className="text-blue-500 w-6 h-6 flex-shrink-0" />
                     </div>
                     
                     <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
@@ -784,7 +520,7 @@ const verifyAccessCode = async () => {
                         <label className="block text-sm font-medium text-yellow-600">Best Performance</label>
                         <p className="text-yellow-900 font-bold text-xl">{userStats.highestScore}</p>
                       </div>
-                      <FiAward className="text-yellow-500 w-6 h-6" />
+                      <FiAward className="text-yellow-500 w-6 h-6 flex-shrink-0" />
                     </div>
                     
                     <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
@@ -792,41 +528,32 @@ const verifyAccessCode = async () => {
                         <label className="block text-sm font-medium text-purple-600">Current Streak</label>
                         <p className="text-purple-900 font-bold text-xl">{userStats.recentStreak}</p>
                       </div>
-                      <FiTrendingUp className="text-purple-500 w-6 h-6" />
+                      <FiTrendingUp className="text-purple-500 w-6 h-6 flex-shrink-0" />
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-8">
+                  <div className="text-center py-6 sm:py-8">
                     <FiBarChart2 className="mx-auto text-4xl text-gray-400 mb-4" />
-                    <p className="text-gray-500">Take your first quiz to see your academic summary!</p>
+                    <p className="text-gray-500 text-sm">Take your first quiz to see your academic summary!</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                 <FiClock className="text-indigo-500" />
                 Quick Actions
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 <button
                   onClick={() => setActiveTab('quizzes')}
                   className="p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-left"
                 >
                   <FiBook className="text-blue-500 w-6 h-6 mb-2" />
-                  <h4 className="font-semibold text-gray-800">Browse Quizzes</h4>
-                  <p className="text-gray-500 text-sm">Find and take available quizzes</p>
-                </button>
-                
-                <button
-                  onClick={() => setActiveTab('results')}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors text-left"
-                >
-                  <FiBarChart2 className="text-green-500 w-6 h-6 mb-2" />
-                  <h4 className="font-semibold text-gray-800">View Results</h4>
-                  <p className="text-gray-500 text-sm">Check your quiz performance</p>
+                  <h4 className="font-semibold text-gray-800 text-sm sm:text-base">Browse Quizzes</h4>
+                  <p className="text-gray-500 text-xs sm:text-sm">Find and take available quizzes</p>
                 </button>
                 
                 <button
@@ -834,8 +561,8 @@ const verifyAccessCode = async () => {
                   className="p-4 border border-gray-200 rounded-lg hover:bg-yellow-50 hover:border-yellow-300 transition-colors text-left"
                 >
                   <FiAward className="text-yellow-500 w-6 h-6 mb-2" />
-                  <h4 className="font-semibold text-gray-800">Leaderboard</h4>
-                  <p className="text-gray-500 text-sm">See how you rank globally</p>
+                  <h4 className="font-semibold text-gray-800 text-sm sm:text-base">Leaderboard</h4>
+                  <p className="text-gray-500 text-xs sm:text-sm">See how you rank globally</p>
                 </button>
               </div>
             </div>
@@ -851,11 +578,11 @@ const verifyAccessCode = async () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-lg shadow-xl max-w-md w-full"
+              className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
             >
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold text-gray-800">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-800">
                     Enter Access Code
                   </h2>
                   <button
@@ -887,10 +614,10 @@ const verifyAccessCode = async () => {
                   </motion.div>
                 )}
 
-                <p className="text-gray-600 mb-2">
+                <p className="text-gray-600 mb-2 text-sm">
                   You need an access code to take <span className="font-medium">"{selectedQuiz?.title}"</span>
                 </p>
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-xs sm:text-sm text-gray-500 mb-4">
                   Department: {selectedQuiz?.department}
                 </p>
                 
@@ -903,7 +630,7 @@ const verifyAccessCode = async () => {
                     setVerificationStatus(null);
                   }}
                   placeholder="Enter your access code"
-                  className={`w-full px-4 py-2 border rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full px-4 py-2 border rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
                     verificationStatus === 'success'
                       ? 'border-green-300 bg-green-50'
                       : verificationStatus === 'error'
@@ -914,14 +641,14 @@ const verifyAccessCode = async () => {
                   disabled={verificationStatus === 'success'}
                 />
                 
-                <div className="flex justify-end gap-3">
+                <div className="flex flex-col sm:flex-row justify-end gap-3">
                   <button
                     onClick={() => {
                       setShowModal(false);
                       setModalError(null);
                       setVerificationStatus(null);
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm"
                     disabled={verificationStatus === 'success'}
                   >
                     Cancel
@@ -929,13 +656,13 @@ const verifyAccessCode = async () => {
                   <button
                     onClick={verifyAccessCode}
                     disabled={!accessCode.trim() || verificationStatus === 'success'}
-                    className={`px-4 py-2 rounded-lg text-white flex items-center gap-1 ${
+                    className={`px-4 py-2 rounded-lg text-white flex items-center justify-center gap-1 text-sm ${
                       verificationStatus === 'success'
                         ? 'bg-green-500'
                         : verificationStatus === 'error'
                         ? 'bg-red-500'
                         : 'bg-blue-600 hover:bg-blue-700'
-                    }`}
+                    } disabled:opacity-50`}
                   >
                     {verificationStatus === 'success' ? (
                       <>
