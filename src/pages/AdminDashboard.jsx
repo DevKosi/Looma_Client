@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiPlus, FiLogOut, FiList, FiTrash2, FiEdit2, 
-  FiUpload, FiCodesandbox, FiClock, FiUsers, 
+  FiCodesandbox, FiClock, FiUsers, 
   FiBarChart2, FiCheck, FiX, FiSave, FiBook,
   FiDownload, FiEye, FiEyeOff
 } from 'react-icons/fi';
@@ -36,7 +36,7 @@ const AdminDashboard = () => {
     results: false
   });
   const [notification, setNotification] = useState(null);
-  const [bulkCodes, setBulkCodes] = useState('');
+
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [stats, setStats] = useState({
     totalQuizzes: 0,
@@ -337,34 +337,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // Bulk upload access codes
-  const handleBulkUploadCodes = async () => {
-    if (!selectedQuiz || !bulkCodes.trim()) return;
-    
-    setLoading(prev => ({ ...prev, action: true }));
-    try {
-      const codes = bulkCodes.split(/\s+/).filter(code => code.trim().length > 0);
-      const batch = writeBatch(db);
-      
-      codes.forEach(code => {
-        const codeRef = doc(collection(db, 'quizzes', selectedQuiz, 'codes'), code);
-        batch.set(codeRef, { 
-          code, 
-          used: false, 
-          usedBy: null,
-          createdAt: serverTimestamp() 
-        });
-      });
 
-      await batch.commit();
-      showNotification(`${codes.length} codes uploaded successfully!`);
-      setBulkCodes('');
-    } catch (error) {
-      showNotification('Failed to upload codes', 'error');
-    } finally {
-      setLoading(prev => ({ ...prev, action: false }));
-    }
-  };
 
   // Clear quiz results
   const clearResults = async (quizId) => {
@@ -521,48 +494,59 @@ const AdminDashboard = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-6">
-          <button
-            onClick={() => {
-              setActiveTab('create');
-              setEditingQuiz(null);
-            }}
-            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
-              activeTab === 'create' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <FiPlus /> {editingQuiz ? 'Edit Quiz' : 'Create Quiz'}
-          </button>
-          <button
-            onClick={() => setActiveTab('manage')}
-            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
-              activeTab === 'manage' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <FiList /> Manage Quizzes
-          </button>
-          <button
-            onClick={() => setActiveTab('results')}
-            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
-              activeTab === 'results' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <FiBarChart2 /> Quiz Results
-          </button>
-          <button
-            onClick={() => setActiveTab('questions')}
-            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 ${
-              activeTab === 'questions' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <FiBook /> Manage Questions
-          </button>
-          <button
-            onClick={() => navigate('/leaderboard')}
-            className="px-4 py-2 font-medium text-sm flex items-center gap-2 text-gray-500 hover:text-gray-700"
-          >
-            <FiUsers /> Leaderboard
-          </button>
+        <div className="border-b border-gray-200 mb-6">
+          <div className="flex overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => {
+                setActiveTab('create');
+                setEditingQuiz(null);
+              }}
+              className={`px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === 'create' ? 'text-blue-600 border-blue-600' : 'text-gray-500 hover:text-gray-700 border-transparent'
+              }`}
+            >
+              <FiPlus size={14} /> 
+              <span className="hidden xs:inline">{editingQuiz ? 'Edit' : 'Create'}</span>
+              <span className="hidden sm:inline">{editingQuiz ? ' Quiz' : ' Quiz'}</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('manage')}
+              className={`px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === 'manage' ? 'text-blue-600 border-blue-600' : 'text-gray-500 hover:text-gray-700 border-transparent'
+              }`}
+            >
+              <FiList size={14} /> 
+              <span className="hidden xs:inline">Manage</span>
+              <span className="hidden sm:inline"> Quizzes</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('results')}
+              className={`px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === 'results' ? 'text-blue-600 border-blue-600' : 'text-gray-500 hover:text-gray-700 border-transparent'
+              }`}
+            >
+              <FiBarChart2 size={14} /> 
+              <span className="hidden xs:inline">Results</span>
+              <span className="hidden sm:inline">Quiz Results</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('questions')}
+              className={`px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === 'questions' ? 'text-blue-600 border-blue-600' : 'text-gray-500 hover:text-gray-700 border-transparent'
+              }`}
+            >
+              <FiBook size={14} /> 
+              <span className="hidden xs:inline">Questions</span>
+              <span className="hidden sm:inline">Manage Questions</span>
+            </button>
+            <button
+              onClick={() => navigate('/leaderboard')}
+              className="px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap text-gray-500 hover:text-gray-700 hover:text-blue-600 transition-colors"
+            >
+              <FiUsers size={14} /> 
+              <span className="hidden xs:inline">Leaderboard</span>
+            </button>
+          </div>
         </div>
 
         {/* Notification */}
@@ -760,16 +744,6 @@ const AdminDashboard = () => {
                     </div>
                     <div className="col-span-3 flex items-center gap-2">
                       <button
-                        onClick={() => {
-                          setSelectedQuiz(quiz.id);
-                          setBulkCodes('');
-                        }}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                        title="Upload Codes"
-                      >
-                        <FiUpload size={16} />
-                      </button>
-                      <button
                         onClick={() => startEditingQuiz(quiz)}
                         className="p-2 text-yellow-600 hover:bg-yellow-50 rounded"
                         title="Edit Quiz"
@@ -790,58 +764,7 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {/* Bulk Code Upload */}
-            {selectedQuiz && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="bg-white rounded-lg shadow-sm p-6"
-              >
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <FiUpload /> Upload Access Codes
-                </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Paste codes below (one per line or separated by spaces)
-                </p>
-                <textarea
-                  value={bulkCodes}
-                  onChange={(e) => setBulkCodes(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-                  rows="6"
-                  placeholder="CODE1 CODE2 CODE3..."
-                ></textarea>
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={() => {
-                      setSelectedQuiz(null);
-                      setBulkCodes('');
-                    }}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleBulkUploadCodes}
-                    disabled={!bulkCodes.trim() || loading.action}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-2 disabled:opacity-50"
-                  >
-                    {loading.action ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <FiUpload /> Upload Codes
-                      </>
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-            )}
+
 
 
                       </div>
